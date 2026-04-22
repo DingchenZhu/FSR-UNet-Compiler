@@ -1,0 +1,669 @@
+[
+  {
+    "layer_idx": 0,
+    "h_out_per_step": 2,
+    "load_total_num": 18,
+    "padding_num": 1,
+    "line_buffer_rows": 4,
+    "line_buffer_reshape": 1,
+    "w_macro_tiles": [
+      [
+        0,
+        64,
+        0
+      ]
+    ],
+    "w_micro_tile": 64,
+    "cin_group": 1,
+    "cout_group": 32,
+    "weight_parall_mode": 1,
+    "weight_transnum_base": 9,
+    "read_mode": 0,
+    "use_bilinear_weights": 0,
+    "ky_outer": 1,
+    "ic_inner": 1,
+    "acc_mode": 0,
+    "store_mode": 0,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "standard conv"
+  },
+  {
+    "layer_idx": 1,
+    "h_out_per_step": 1,
+    "load_total_num": 1,
+    "padding_num": 0,
+    "line_buffer_rows": 1,
+    "line_buffer_reshape": 0,
+    "w_macro_tiles": [
+      [
+        0,
+        64,
+        0
+      ]
+    ],
+    "w_micro_tile": 32,
+    "cin_group": 1,
+    "cout_group": 1,
+    "weight_parall_mode": 0,
+    "weight_transnum_base": 1,
+    "read_mode": 0,
+    "use_bilinear_weights": 0,
+    "ky_outer": 1,
+    "ic_inner": 1,
+    "acc_mode": 0,
+    "store_mode": 0,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "activation \u2014 no conv tiling"
+  },
+  {
+    "layer_idx": 2,
+    "h_out_per_step": 2,
+    "load_total_num": 18,
+    "padding_num": 1,
+    "line_buffer_rows": 4,
+    "line_buffer_reshape": 1,
+    "w_macro_tiles": [
+      [
+        0,
+        64,
+        0
+      ]
+    ],
+    "w_micro_tile": 64,
+    "cin_group": 8,
+    "cout_group": 8,
+    "weight_parall_mode": 0,
+    "weight_transnum_base": 1,
+    "read_mode": 0,
+    "use_bilinear_weights": 0,
+    "ky_outer": 1,
+    "ic_inner": 1,
+    "acc_mode": 0,
+    "store_mode": 0,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "standard conv"
+  },
+  {
+    "layer_idx": 3,
+    "h_out_per_step": 1,
+    "load_total_num": 1,
+    "padding_num": 0,
+    "line_buffer_rows": 1,
+    "line_buffer_reshape": 0,
+    "w_macro_tiles": [
+      [
+        0,
+        64,
+        0
+      ]
+    ],
+    "w_micro_tile": 32,
+    "cin_group": 1,
+    "cout_group": 1,
+    "weight_parall_mode": 0,
+    "weight_transnum_base": 1,
+    "read_mode": 0,
+    "use_bilinear_weights": 0,
+    "ky_outer": 1,
+    "ic_inner": 1,
+    "acc_mode": 0,
+    "store_mode": 0,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "activation \u2014 no conv tiling"
+  },
+  {
+    "layer_idx": 4,
+    "h_out_per_step": 4,
+    "load_total_num": 9,
+    "padding_num": 1,
+    "line_buffer_rows": 4,
+    "line_buffer_reshape": 0,
+    "w_macro_tiles": [
+      [
+        0,
+        64,
+        0
+      ]
+    ],
+    "w_micro_tile": 64,
+    "cin_group": 1,
+    "cout_group": 8,
+    "weight_parall_mode": 0,
+    "weight_transnum_base": 1,
+    "read_mode": 0,
+    "use_bilinear_weights": 0,
+    "ky_outer": 1,
+    "ic_inner": 1,
+    "acc_mode": 0,
+    "store_mode": 0,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "pool2d"
+  },
+  {
+    "layer_idx": 5,
+    "h_out_per_step": 2,
+    "load_total_num": 4,
+    "padding_num": 1,
+    "line_buffer_rows": 4,
+    "line_buffer_reshape": 1,
+    "w_macro_tiles": [
+      [
+        0,
+        16,
+        0
+      ]
+    ],
+    "w_micro_tile": 32,
+    "cin_group": 4,
+    "cout_group": 24,
+    "weight_parall_mode": 1,
+    "weight_transnum_base": 9,
+    "read_mode": 0,
+    "use_bilinear_weights": 0,
+    "ky_outer": 1,
+    "ic_inner": 1,
+    "acc_mode": 0,
+    "store_mode": 0,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "standard conv"
+  },
+  {
+    "layer_idx": 6,
+    "h_out_per_step": 4,
+    "load_total_num": 9,
+    "padding_num": 1,
+    "line_buffer_rows": 6,
+    "line_buffer_reshape": 1,
+    "w_macro_tiles": [
+      [
+        0,
+        64,
+        0
+      ]
+    ],
+    "w_micro_tile": 64,
+    "cin_group": 4,
+    "cout_group": 8,
+    "weight_parall_mode": 0,
+    "weight_transnum_base": 12,
+    "read_mode": 0,
+    "use_bilinear_weights": 1,
+    "ky_outer": 3,
+    "ic_inner": 2,
+    "acc_mode": 4,
+    "store_mode": 3,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "deformable"
+  },
+  {
+    "layer_idx": 7,
+    "h_out_per_step": 1,
+    "load_total_num": 1,
+    "padding_num": 0,
+    "line_buffer_rows": 1,
+    "line_buffer_reshape": 0,
+    "w_macro_tiles": [
+      [
+        0,
+        64,
+        0
+      ]
+    ],
+    "w_micro_tile": 32,
+    "cin_group": 1,
+    "cout_group": 1,
+    "weight_parall_mode": 0,
+    "weight_transnum_base": 1,
+    "read_mode": 0,
+    "use_bilinear_weights": 0,
+    "ky_outer": 1,
+    "ic_inner": 1,
+    "acc_mode": 0,
+    "store_mode": 0,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "activation \u2014 no conv tiling"
+  },
+  {
+    "layer_idx": 8,
+    "h_out_per_step": 4,
+    "load_total_num": 9,
+    "padding_num": 1,
+    "line_buffer_rows": 4,
+    "line_buffer_reshape": 0,
+    "w_macro_tiles": [
+      [
+        0,
+        64,
+        0
+      ]
+    ],
+    "w_micro_tile": 64,
+    "cin_group": 1,
+    "cout_group": 8,
+    "weight_parall_mode": 0,
+    "weight_transnum_base": 1,
+    "read_mode": 0,
+    "use_bilinear_weights": 0,
+    "ky_outer": 1,
+    "ic_inner": 1,
+    "acc_mode": 0,
+    "store_mode": 0,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "pool2d"
+  },
+  {
+    "layer_idx": 9,
+    "h_out_per_step": 2,
+    "load_total_num": 4,
+    "padding_num": 1,
+    "line_buffer_rows": 4,
+    "line_buffer_reshape": 1,
+    "w_macro_tiles": [
+      [
+        0,
+        16,
+        0
+      ]
+    ],
+    "w_micro_tile": 32,
+    "cin_group": 4,
+    "cout_group": 24,
+    "weight_parall_mode": 1,
+    "weight_transnum_base": 9,
+    "read_mode": 0,
+    "use_bilinear_weights": 0,
+    "ky_outer": 1,
+    "ic_inner": 1,
+    "acc_mode": 0,
+    "store_mode": 0,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "standard conv"
+  },
+  {
+    "layer_idx": 10,
+    "h_out_per_step": 4,
+    "load_total_num": 9,
+    "padding_num": 1,
+    "line_buffer_rows": 6,
+    "line_buffer_reshape": 1,
+    "w_macro_tiles": [
+      [
+        0,
+        64,
+        0
+      ]
+    ],
+    "w_micro_tile": 64,
+    "cin_group": 4,
+    "cout_group": 8,
+    "weight_parall_mode": 0,
+    "weight_transnum_base": 12,
+    "read_mode": 0,
+    "use_bilinear_weights": 1,
+    "ky_outer": 3,
+    "ic_inner": 2,
+    "acc_mode": 4,
+    "store_mode": 3,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "deformable"
+  },
+  {
+    "layer_idx": 11,
+    "h_out_per_step": 1,
+    "load_total_num": 1,
+    "padding_num": 0,
+    "line_buffer_rows": 1,
+    "line_buffer_reshape": 0,
+    "w_macro_tiles": [
+      [
+        0,
+        64,
+        0
+      ]
+    ],
+    "w_micro_tile": 32,
+    "cin_group": 1,
+    "cout_group": 1,
+    "weight_parall_mode": 0,
+    "weight_transnum_base": 1,
+    "read_mode": 0,
+    "use_bilinear_weights": 0,
+    "ky_outer": 1,
+    "ic_inner": 1,
+    "acc_mode": 0,
+    "store_mode": 0,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "activation \u2014 no conv tiling"
+  },
+  {
+    "layer_idx": 12,
+    "h_out_per_step": 4,
+    "load_total_num": 9,
+    "padding_num": 1,
+    "line_buffer_rows": 4,
+    "line_buffer_reshape": 0,
+    "w_macro_tiles": [
+      [
+        0,
+        64,
+        0
+      ]
+    ],
+    "w_micro_tile": 64,
+    "cin_group": 1,
+    "cout_group": 8,
+    "weight_parall_mode": 0,
+    "weight_transnum_base": 1,
+    "read_mode": 0,
+    "use_bilinear_weights": 0,
+    "ky_outer": 1,
+    "ic_inner": 1,
+    "acc_mode": 0,
+    "store_mode": 0,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "pool2d"
+  },
+  {
+    "layer_idx": 13,
+    "h_out_per_step": 2,
+    "load_total_num": 4,
+    "padding_num": 1,
+    "line_buffer_rows": 4,
+    "line_buffer_reshape": 1,
+    "w_macro_tiles": [
+      [
+        0,
+        16,
+        0
+      ]
+    ],
+    "w_micro_tile": 32,
+    "cin_group": 4,
+    "cout_group": 24,
+    "weight_parall_mode": 1,
+    "weight_transnum_base": 9,
+    "read_mode": 0,
+    "use_bilinear_weights": 0,
+    "ky_outer": 1,
+    "ic_inner": 1,
+    "acc_mode": 0,
+    "store_mode": 0,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "standard conv"
+  },
+  {
+    "layer_idx": 14,
+    "h_out_per_step": 4,
+    "load_total_num": 9,
+    "padding_num": 1,
+    "line_buffer_rows": 6,
+    "line_buffer_reshape": 1,
+    "w_macro_tiles": [
+      [
+        0,
+        64,
+        0
+      ]
+    ],
+    "w_micro_tile": 64,
+    "cin_group": 4,
+    "cout_group": 8,
+    "weight_parall_mode": 0,
+    "weight_transnum_base": 12,
+    "read_mode": 0,
+    "use_bilinear_weights": 1,
+    "ky_outer": 3,
+    "ic_inner": 2,
+    "acc_mode": 4,
+    "store_mode": 3,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "deformable"
+  },
+  {
+    "layer_idx": 15,
+    "h_out_per_step": 1,
+    "load_total_num": 1,
+    "padding_num": 0,
+    "line_buffer_rows": 1,
+    "line_buffer_reshape": 0,
+    "w_macro_tiles": [
+      [
+        0,
+        64,
+        0
+      ]
+    ],
+    "w_micro_tile": 32,
+    "cin_group": 1,
+    "cout_group": 1,
+    "weight_parall_mode": 0,
+    "weight_transnum_base": 1,
+    "read_mode": 0,
+    "use_bilinear_weights": 0,
+    "ky_outer": 1,
+    "ic_inner": 1,
+    "acc_mode": 0,
+    "store_mode": 0,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "activation \u2014 no conv tiling"
+  },
+  {
+    "layer_idx": 16,
+    "h_out_per_step": 4,
+    "load_total_num": 9,
+    "padding_num": 1,
+    "line_buffer_rows": 4,
+    "line_buffer_reshape": 0,
+    "w_macro_tiles": [
+      [
+        0,
+        64,
+        0
+      ]
+    ],
+    "w_micro_tile": 64,
+    "cin_group": 1,
+    "cout_group": 8,
+    "weight_parall_mode": 0,
+    "weight_transnum_base": 1,
+    "read_mode": 0,
+    "use_bilinear_weights": 0,
+    "ky_outer": 1,
+    "ic_inner": 1,
+    "acc_mode": 0,
+    "store_mode": 0,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "pool2d"
+  },
+  {
+    "layer_idx": 17,
+    "h_out_per_step": 2,
+    "load_total_num": 4,
+    "padding_num": 1,
+    "line_buffer_rows": 4,
+    "line_buffer_reshape": 1,
+    "w_macro_tiles": [
+      [
+        0,
+        16,
+        0
+      ]
+    ],
+    "w_micro_tile": 32,
+    "cin_group": 4,
+    "cout_group": 24,
+    "weight_parall_mode": 1,
+    "weight_transnum_base": 9,
+    "read_mode": 0,
+    "use_bilinear_weights": 0,
+    "ky_outer": 1,
+    "ic_inner": 1,
+    "acc_mode": 0,
+    "store_mode": 0,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "standard conv"
+  },
+  {
+    "layer_idx": 18,
+    "h_out_per_step": 4,
+    "load_total_num": 9,
+    "padding_num": 1,
+    "line_buffer_rows": 6,
+    "line_buffer_reshape": 1,
+    "w_macro_tiles": [
+      [
+        0,
+        64,
+        0
+      ]
+    ],
+    "w_micro_tile": 64,
+    "cin_group": 4,
+    "cout_group": 8,
+    "weight_parall_mode": 0,
+    "weight_transnum_base": 12,
+    "read_mode": 0,
+    "use_bilinear_weights": 1,
+    "ky_outer": 3,
+    "ic_inner": 2,
+    "acc_mode": 4,
+    "store_mode": 3,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "deformable"
+  },
+  {
+    "layer_idx": 19,
+    "h_out_per_step": 1,
+    "load_total_num": 1,
+    "padding_num": 0,
+    "line_buffer_rows": 1,
+    "line_buffer_reshape": 0,
+    "w_macro_tiles": [
+      [
+        0,
+        64,
+        0
+      ]
+    ],
+    "w_micro_tile": 32,
+    "cin_group": 1,
+    "cout_group": 1,
+    "weight_parall_mode": 0,
+    "weight_transnum_base": 1,
+    "read_mode": 0,
+    "use_bilinear_weights": 0,
+    "ky_outer": 1,
+    "ic_inner": 1,
+    "acc_mode": 0,
+    "store_mode": 0,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "activation \u2014 no conv tiling"
+  },
+  {
+    "layer_idx": 20,
+    "h_out_per_step": 2,
+    "load_total_num": 18,
+    "padding_num": 1,
+    "line_buffer_rows": 4,
+    "line_buffer_reshape": 1,
+    "w_macro_tiles": [
+      [
+        0,
+        64,
+        0
+      ]
+    ],
+    "w_micro_tile": 64,
+    "cin_group": 4,
+    "cout_group": 32,
+    "weight_parall_mode": 1,
+    "weight_transnum_base": 1,
+    "read_mode": 0,
+    "use_bilinear_weights": 0,
+    "ky_outer": 1,
+    "ic_inner": 1,
+    "acc_mode": 0,
+    "store_mode": 0,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "standard conv"
+  },
+  {
+    "layer_idx": 21,
+    "h_out_per_step": 1,
+    "load_total_num": 1,
+    "padding_num": 0,
+    "line_buffer_rows": 1,
+    "line_buffer_reshape": 0,
+    "w_macro_tiles": [
+      [
+        0,
+        64,
+        0
+      ]
+    ],
+    "w_micro_tile": 32,
+    "cin_group": 1,
+    "cout_group": 1,
+    "weight_parall_mode": 0,
+    "weight_transnum_base": 1,
+    "read_mode": 0,
+    "use_bilinear_weights": 0,
+    "ky_outer": 1,
+    "ic_inner": 1,
+    "acc_mode": 0,
+    "store_mode": 0,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "activation \u2014 no conv tiling"
+  },
+  {
+    "layer_idx": 22,
+    "h_out_per_step": 2,
+    "load_total_num": 18,
+    "padding_num": 1,
+    "line_buffer_rows": 4,
+    "line_buffer_reshape": 1,
+    "w_macro_tiles": [
+      [
+        0,
+        64,
+        0
+      ]
+    ],
+    "w_micro_tile": 64,
+    "cin_group": 8,
+    "cout_group": 4,
+    "weight_parall_mode": 0,
+    "weight_transnum_base": 9,
+    "read_mode": 0,
+    "use_bilinear_weights": 0,
+    "ky_outer": 1,
+    "ic_inner": 1,
+    "acc_mode": 0,
+    "store_mode": 0,
+    "quant_mode": 0,
+    "quant_transnum": 4,
+    "notes": "standard conv"
+  }
+]
