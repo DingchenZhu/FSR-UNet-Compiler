@@ -79,3 +79,31 @@ def fuse_offset_generators(layers: List[LayerDesc]) -> List[LayerDesc]:
         layer.idx = new_idx
 
     return fused
+
+
+def fuse_activations(layers: List[LayerDesc]) -> List[LayerDesc]:
+    """Merge (conv2d/offset_gen/deformable_conv2d → relu/prelu) pairs.
+
+    Sets LayerDesc.activation on the preceding conv layer and drops the
+    standalone activation LayerDesc.  Indices are renumbered after fusion.
+    """
+    fused: List[LayerDesc] = []
+    i = 0
+    while i < len(layers):
+        L = layers[i]
+        if (
+            i + 1 < len(layers)
+            and L.op in ("conv2d", "offset_gen", "deformable_conv2d")
+            and layers[i + 1].op in ("relu", "prelu")
+        ):
+            L.activation = layers[i + 1].op
+            fused.append(L)
+            i += 2
+        else:
+            fused.append(L)
+            i += 1
+
+    for new_idx, layer in enumerate(fused):
+        layer.idx = new_idx
+
+    return fused

@@ -63,6 +63,7 @@ class LayerDesc:
     upscale_factor: int = 1
     pool_type: Optional[str] = None
     pool_size: Tuple[int, int] = (1, 1)
+    activation: Optional[str] = None   # "relu" / "prelu" — set by fuse_activations()
     extra: Dict[str, Any] = field(default_factory=dict)
 
 

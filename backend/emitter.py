@@ -39,6 +39,18 @@ class EmitterState:
     quant_config_idx: int = 0
     offset_reg_idx: int = 0
     conv_layer_counter: int = 0  # 1-based; increments only for conv/deformable_conv layers
+    # Ping-pong feature buffer allocation. feature_buf names the on-chip buffer
+    # the NEXT conv/dconv layer will read from. Standard conv and deformable
+    # conv both toggle it after emitting their DataStorer; offset_gen does NOT
+    # toggle (its output goes to offset_reg, and the next layer re-reads the
+    # same feature buffer that fed the offset_gen).
+    # Initialize to 'b' so layer-0's DataStorer writes to 'a' (matching
+    # golden sr_inst where dest_buffer_idx_on_chip starts at 'a').
+    feature_buf: str = "b"
+    # Identifies the terminal conv/dconv layer so its DataStorer writes to the
+    # network's exported output buffer instead of the usual 'a'/'b' ping-pong.
+    last_layer_idx: int = -1
+    last_layer_dest_buffer: str = "fsrcnn_output_buffer"
 
 
 class InstructionEmitter:
@@ -60,11 +72,11 @@ class InstructionEmitter:
                 self._emit_offset_gen(layer, plan)
             else:
                 self._emit_standard_conv(layer, plan)
-        elif layer.op in ("relu", "prelu", "pool2d"):
+        elif layer.op == "pool2d":
             isa.Inst.code_list.append({
                 "code_num": [isa.Inst.current_code_num],
                 "op_code": "PseudoOp",
-                "note": f"skipped-{layer.op}",
+                "note": "skipped-pool2d",
                 "layer_idx": layer.idx,
             })
             isa.Inst.current_code_num += 1
@@ -80,10 +92,28 @@ class InstructionEmitter:
         self.state.quant_bas_addr += transnum
 
     def _emit_standard_conv(self, layer: LayerDesc, plan: TilingPlan) -> None:
-        """Template A: QuantLoader → per macro W-tile (DataLoader, WeightLoader, DataStorer)."""
-        self.emit_quant_loader(self.state.conv_layer_counter, transnum=plan.quant_transnum, quant_mode=plan.quant_mode)
+        """Template A: QuantLoader → per macro W-tile (DataLoader, WeightLoader, DataStorer).
+
+        After all macro W-tiles complete, advance weight_bas_addr[0] by the total
+        weight footprint of the layer = cin_group × weight_transnum_base. This
+        matches sd_sr_codegen.py post-layer bookkeeping (e.g. layer 0 adds 9 with
+        cin_group=1; layer 1 adds 4*9 with cin_group=4).
+        """
+        st = self.state
+        # Destination ping-pong buffer: terminal conv writes to the exported
+        # output buffer; all other layers alternate 'a'/'b'.
+        if layer.idx == st.last_layer_idx:
+            dest_buf = st.last_layer_dest_buffer
+        else:
+            dest_buf = "b" if st.feature_buf == "a" else "a"
+
+        self.emit_quant_loader(st.conv_layer_counter, transnum=plan.quant_transnum, quant_mode=plan.quant_mode)
         for macro_idx, (w0, w_sz, bas_hint) in enumerate(plan.w_macro_tiles):
-            self._emit_w_macro_tile(layer, plan, w0, w_sz, bas_hint, macro_idx)
+            self._emit_w_macro_tile(layer, plan, w0, w_sz, bas_hint, macro_idx, dest_buf)
+        st.weight_bas_addr[0] += plan.weight_transnum_base * plan.cin_group * plan.ky_outer
+        # Toggle feature_buf so the next layer reads from the buffer we just
+        # wrote to. (Safe even after the terminal layer — nothing reads it.)
+        st.feature_buf = dest_buf
 
     def _emit_w_macro_tile(
         self,
@@ -93,6 +123,7 @@ class InstructionEmitter:
         w_sz: int,
         bas_hint: int,
         macro_idx: int,
+        dest_buf: str,
     ) -> None:
         st = self.state
         load_total = plan.load_total_num
@@ -109,37 +140,47 @@ class InstructionEmitter:
             else:
                 is_padding_row = 0
 
-            # DataLoader and WeightLoader use the SAME line_buffer_idx per iteration.
-            # sd_codegen uses separate managers both starting at 0 and toggling independently,
-            # so they always stay in sync. We replicate this with a single toggle AFTER both.
-            isa.DataLoader.dispatch(
-                layer_idx=layer.idx,
-                line_buffer_reshape=plan.line_buffer_reshape,
-                is_padding_row=is_padding_row,
-                read_mode=plan.read_mode,
-                transnum=plan.line_buffer_rows,
-                line_buffer_idx=st.line_buffer_idx,
-                src_buffer_idx="offchip_input_buffer" if layer.idx == 0 else "a",
-                bas_addr=st.dataloader_bas_addr,
-            )
+            # ky × cin inner loops.
+            # plan.ky_outer == 1 for most standard convs (hardware handles 3×3
+            # kernel implicitly via the line buffer).  plan.ky_outer == 3 for
+            # Template F (large-cin 3×3 with small cout, e.g. FSRCNN L11) where
+            # the kernel-row dimension is explicit in software.
+            for ky_g in range(plan.ky_outer):
+                for cin_g in range(plan.cin_group):
+                    isa.DataLoader.dispatch(
+                        layer_idx=layer.idx,
+                        line_buffer_reshape=plan.line_buffer_reshape,
+                        is_padding_row=is_padding_row,
+                        read_mode=plan.read_mode,
+                        transnum=plan.line_buffer_rows,
+                        line_buffer_idx=st.line_buffer_idx,
+                        # Layer 0 sources from the DDR-preloaded offchip input
+                        # buffer; subsequent layers follow ping-pong alternation.
+                        src_buffer_idx="offchip_input_buffer" if layer.idx == 0 else st.feature_buf,
+                        bas_addr=st.dataloader_bas_addr + layer.h_in * cin_g,
+                    )
+
+                    isa.WeightLoader.dispatch(
+                        acc_reg_comp_idx=st.acc_reg_idx,
+                        kernal_size=0 if layer.k_h == 3 else 1,
+                        line_buffer_row_shift=1,
+                        line_buffer_idx=st.line_buffer_idx,
+                        is_padding_col=1,
+                        weight_parall_mode=plan.weight_parall_mode,
+                        # First (ky, cin) pair overwrites the accumulator; rest accumulate.
+                        is_new=0 if (ky_g == 0 and cin_g == 0) else 1,
+                        transnum=plan.weight_transnum_base,
+                        bas_addr=st.weight_bas_addr[0] + (ky_g * plan.cin_group + cin_g) * plan.weight_transnum_base,
+                        is_bilinear_bicubic=plan.use_bilinear_weights,
+                        offset_reg_idx=st.offset_reg_idx,
+                    )
+                    st.line_buffer_idx = 1 - st.line_buffer_idx
+
+            # Advance DataLoader base ONCE per cal_idx (outer H step), not per cin_g.
             st.dataloader_bas_addr += 2 if load_idx < padding_num else 4
 
-            isa.WeightLoader.dispatch(
-                acc_reg_comp_idx=st.acc_reg_idx,
-                kernal_size=0 if layer.k_h == 3 else 1,
-                line_buffer_row_shift=1,
-                line_buffer_idx=st.line_buffer_idx,   # same as DataLoader (no toggle between)
-                is_padding_col=1,
-                weight_parall_mode=plan.weight_parall_mode,
-                is_new=1,
-                transnum=plan.weight_transnum_base,
-                bas_addr=st.weight_bas_addr[0],
-                is_bilinear_bicubic=plan.use_bilinear_weights,
-                offset_reg_idx=st.offset_reg_idx,
-            )
-            st.acc_reg_idx = 1 - st.acc_reg_idx
-            st.line_buffer_idx = 1 - st.line_buffer_idx  # single toggle after both
-
+            # DataStorer uses the SAME acc_reg_idx the WeightLoader just wrote to.
+            # acc_reg_idx toggles ONCE per cal_idx, AFTER DataStorer (not between WL & DS).
             isa.DataStorer.dispatch(
                 quant_config_idx=st.quant_config_idx,
                 pixelshuffle_out_mode=0,
@@ -158,7 +199,7 @@ class InstructionEmitter:
                 is_first_or_last_row=0,
                 is_mask=0,
                 is_new=0,
-                dest_buffer_idx="a",
+                dest_buffer_idx=dest_buf,
             )
             st.acc_reg_idx = 1 - st.acc_reg_idx
             st.storer_bas_addr += 2
@@ -192,7 +233,9 @@ class InstructionEmitter:
                 read_mode=plan.read_mode,
                 transnum=plan.line_buffer_rows,
                 line_buffer_idx=st.line_buffer_idx,
-                src_buffer_idx="b",
+                # offset_gen reads the upstream feature map currently in the
+                # ping-pong buffer — follow the live feature_buf state.
+                src_buffer_idx=st.feature_buf,
                 bas_addr=st.dataloader_bas_addr,
             )
             isa.WeightLoader.dispatch(
@@ -246,6 +289,14 @@ class InstructionEmitter:
           DataStorer (pooling mode)
         """
         st = self.state
+        # Destination ping-pong: dconv reads from current feature_buf and writes
+        # to the other. Terminal-layer override applies if a dconv is the final
+        # compute layer (unusual, but supported for completeness).
+        if layer.idx == st.last_layer_idx:
+            dest_buf = st.last_layer_dest_buffer
+        else:
+            dest_buf = "b" if st.feature_buf == "a" else "a"
+
         self.emit_quant_loader(self.state.conv_layer_counter, transnum=max(plan.quant_transnum, layer.cout), quant_mode=plan.quant_mode)
         cal_total = max(1, layer.h_in // plan.h_out_per_step)
         padding_num = plan.padding_num
@@ -279,7 +330,9 @@ class InstructionEmitter:
                         read_mode=plan.read_mode,
                         transnum=plan.line_buffer_rows,
                         line_buffer_idx=st.line_buffer_idx,
-                        src_buffer_idx="b",
+                        # Deformable conv reads the live feature map — follow
+                        # the ping-pong state rather than a hardcoded buffer.
+                        src_buffer_idx=st.feature_buf,
                         bas_addr=st.dataloader_bas_addr + ic_g * 32 + (ky if cal_idx > 0 else 0),
                     )
                     # No toggle here — DataLoader and WeightLoader share the same line_buffer_idx.
@@ -320,13 +373,16 @@ class InstructionEmitter:
                 is_first_or_last_row=0,
                 is_mask=0,
                 is_new=0,
-                dest_buffer_idx="a",
+                dest_buffer_idx=dest_buf,
             )
             st.acc_reg_idx = 1 - st.acc_reg_idx
             st.storer_bas_addr += 4
             st.dataloader_bas_addr += 2 if cal_idx < padding_num else 4
 
         st.weight_bas_addr[0] += plan.weight_transnum_base * plan.ky_outer * plan.ic_inner
+        # After all H-tiles write the output feature map, swap ping-pong state
+        # so the next layer reads from dest_buf.
+        st.feature_buf = dest_buf
 
     def _emit_preamble(self) -> None:
         """5-instruction DDR preload preamble emitted once per model (is_first=True).
@@ -356,9 +412,15 @@ def emit_program(
     *,
     is_first: bool = False,
     load_next: bool = False,
+    emit_image_load: bool = True,
     image_transnum: int = 576,
     inter_layer_transnum: Optional[int] = None,
     inter_layer_bas_addr: int = 576,
+    emit_offchip_store: bool = False,
+    offchip_store_src_buffer: str = "fsrcnn_output_buffer",
+    offchip_store_transnum: int = 1024,
+    offchip_store_base_addr: int = 0,
+    last_layer_dest_buffer: str = "fsrcnn_output_buffer",
     finalize: bool = True,
 ) -> List[Dict[str, Any]]:
     """Emit full network.
@@ -368,21 +430,47 @@ def emit_program(
                   the very first frame of a multi-frame pipeline.
         load_next: After layer-0 tiles, emit an OffchipDataLoader for the NEXT frame's
                    image so the hardware can prefetch it while the current frame continues.
+        emit_image_load: Emit an OffchipDataLoader before layer-0 tiles to DMA the input
+                         image from DDR. Set False when the image is pre-loaded by a
+                         preceding pipeline stage (e.g. FSRCNN golden sr_inst() scenario
+                         where UNet already populated offchip_input_buffer).
         image_transnum: Pixel count for one image tile (default 144×4=576 for UNet 144-row).
         inter_layer_transnum: If not None, emit an OffchipDataLoader for the inter-model
                               input (e.g. FSRCNN input) after layer-0 tiles.
                               Set to 64 (32×2) for the UNet→FSRCNN boundary.
         inter_layer_bas_addr: bas_addr for the inter-layer OffchipDataLoader.
+        emit_offchip_store: If True, emit a final OffchipDataStorer after all layers —
+                            FSRCNN's sr_inst() ends with this instruction to write the
+                            SR result from on-chip output buffer back to DDR. UNet's
+                            sd_inst() does NOT emit one (its output stays on-chip as
+                            input to the downstream FSRCNN/bicubic stage).
+        offchip_store_src_buffer: Source buffer name for the terminal OffchipDataStorer.
+                                  Golden FSRCNN uses 'fsrcnn_output_buffer'.
+        offchip_store_transnum: Transfer count for the terminal OffchipDataStorer.
+                                Golden FSRCNN uses 1024 (= 32×32 SR output block).
+        offchip_store_base_addr: DDR base address for the terminal OffchipDataStorer.
+        last_layer_dest_buffer: dest_buffer_idx for the DataStorer of the final
+                                conv/deformable_conv layer. All preceding conv
+                                layers ping-pong between 'a' and 'b'; the last
+                                one writes to this named buffer so the terminal
+                                OffchipDataStorer can drain it to DDR.
         finalize: Run dependency-analysis + virtual-register-allocation post-pass.
     """
     em = InstructionEmitter()
     em.reset()
 
+    # Ping-pong buffer allocator: identify the terminal compute layer so its
+    # DataStorer targets last_layer_dest_buffer instead of 'a'/'b'.
+    conv_layers = [L for L in layers if L.op in ("conv2d", "deformable_conv2d")]
+    if conv_layers:
+        em.state.last_layer_idx = conv_layers[-1].idx
+        em.state.last_layer_dest_buffer = last_layer_dest_buffer
+
     if is_first:
         em._emit_preamble()
 
     for i, (L, P) in enumerate(zip(layers, plans)):
-        if i == 0:
+        if i == 0 and emit_image_load:
             isa.OffchipDataLoader.dispatch(
                 transnum=image_transnum,
                 load_model=0,
@@ -407,6 +495,17 @@ def emit_program(
                     src_buffer_idx=0,
                     bas_addr=inter_layer_bas_addr,
                 )
+
+    # FSRCNN terminal off-chip write-back — matches sr_inst()'s final
+    # OffchipDataStorer at sd_sr_codegen.py line ~3672. The post-pass
+    # dependency analyzer already wires this to the last DataStorer whose
+    # dest_buffer_idx == offchip_store_src_buffer (see post_pass.py:209).
+    if emit_offchip_store:
+        isa.OffchipDataStorer.dispatch(
+            src_buffer=offchip_store_src_buffer,
+            transnum=offchip_store_transnum,
+            base_addr=offchip_store_base_addr,
+        )
 
     raw: List[Dict[str, Any]] = list(isa.Inst.code_list)
     if finalize:

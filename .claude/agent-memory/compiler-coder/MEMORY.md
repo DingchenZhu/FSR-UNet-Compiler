@@ -1,0 +1,1 @@
+- [sr_inst() golden reference](reference_sr_inst_golden.md) — how to regenerate sr_inst() standalone golden, the 32×32 block assumption, and 12-layer structure

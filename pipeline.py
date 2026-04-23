@@ -33,7 +33,7 @@ if _HERE not in sys.path:
 
 from backend.emitter import emit_program
 from frontend.frontend import dump_relay, load_onnx, load_pytorch
-from ir.fusion_pass import fuse_offset_generators
+from ir.fusion_pass import fuse_activations, fuse_offset_generators
 from ir.layer_desc import LayerDesc, extract_layer_descs
 from tiling.tiling import TilingPlan, plan_all
 
@@ -50,9 +50,20 @@ class PipelineConfig:
     # load_next scheduling flags (mirrors sd_inst parameters)
     is_first: bool = False
     load_next: bool = False
+    emit_image_load: bool = True       # False for FSRCNN-only golden (image pre-loaded by UNet)
     image_transnum: int = 576          # 144×4 for UNet 144-row input tile
     inter_layer_transnum: Optional[int] = None  # 64 (32×2) for UNet→FSRCNN boundary
     inter_layer_bas_addr: int = 576
+    # Terminal OffchipDataStorer (FSRCNN sr_inst() tail write-back).
+    # Defaults match sr_inst(): src_buffer='fsrcnn_output_buffer', transnum=1024, base_addr=0.
+    emit_offchip_store: bool = True
+    offchip_store_src_buffer: str = "fsrcnn_output_buffer"
+    offchip_store_transnum: int = 1024
+    offchip_store_base_addr: int = 0
+    # dest_buffer_idx for the terminal conv/deformable_conv layer's DataStorer.
+    # All preceding layers ping-pong between 'a' and 'b'; the terminal layer
+    # targets this named buffer which the final OffchipDataStorer drains to DDR.
+    last_layer_dest_buffer: str = "fsrcnn_output_buffer"
     verbose: bool = False
 
 
@@ -119,6 +130,7 @@ def run_pipeline(
         print("[2/4] Extracting layer descriptors")
     layers = extract_layer_descs(mod)
     layers = fuse_offset_generators(layers)
+    layers = fuse_activations(layers)
 
     # ── Stage 3: Tiling ───────────────────────────────────────────────────
     if cfg.verbose:
@@ -149,9 +161,15 @@ def run_pipeline(
         tilings,
         is_first=cfg.is_first,
         load_next=cfg.load_next,
+        emit_image_load=cfg.emit_image_load,
         image_transnum=cfg.image_transnum,
         inter_layer_transnum=cfg.inter_layer_transnum,
         inter_layer_bas_addr=cfg.inter_layer_bas_addr,
+        emit_offchip_store=cfg.emit_offchip_store,
+        offchip_store_src_buffer=cfg.offchip_store_src_buffer,
+        offchip_store_transnum=cfg.offchip_store_transnum,
+        offchip_store_base_addr=cfg.offchip_store_base_addr,
+        last_layer_dest_buffer=cfg.last_layer_dest_buffer,
         finalize=cfg.finalize_instructions,
     )
 
