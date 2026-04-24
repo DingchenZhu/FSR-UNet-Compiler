@@ -49,7 +49,7 @@ class TilingPlan:
     h_out_per_step: int          # output rows advanced per outer H step
     load_total_num: int          # DataLoader blocks along H per macro W tile
     padding_num: int             # first/last N blocks need padding flags
-    line_buffer_rows: int        # rows loaded per DataLoader block (4=std, 6=deformable)
+    line_buffer_rows: int        # rows loaded per DataLoader block (template-specific)
     line_buffer_reshape: int     # 0-3 line buffer reshape mode
     w_macro_tiles: List[Tuple[int, int, int]]
     w_micro_tile: int            # 32 / 64 / 128
@@ -67,6 +67,20 @@ class TilingPlan:
     quant_mode: int = 0          # QuantLoader.quant_mode
     quant_transnum: int = 4      # QuantLoader.transnum
     data_bas_addr: int = 0       # DataLoader base address (offset_gen: fixed at 64)
+    tile_h: int = 32             # hardware spatial tile height (rows processed per burst)
+    wl_line_buffer_row_shift: int = 1   # WeightLoader.line_buffer_row_shift
+    wl_is_padding_col: int = 1          # WeightLoader.is_padding_col
+    # DataStorer.base_addrs_res per-iteration increment (was hardcoded as +=2
+    # in emitter._emit_w_macro_tile). Template-specific values from golden
+    # sd_sr_codegen.py:
+    #   Template A/B (h_out_per_step=2)               → 2
+    #   Template C (cin=1, k=3, h_out_per_step=1)     → 1
+    #   Template D (k=1, cin≤8, store_mode=2)         → 1
+    #   Template E (k=1, cin>8, h_out_per_step=4)     → 4 (FSRCNN L1)
+    #   Template F (k=3, cin>8, cout≤8, non-pixshuf)  → 2  (default)
+    #   deformable conv                                → 4
+    #   pixelshuffle (acc_mode=5, FSRCNN last_part)    → 128
+    storer_step: int = 2
     notes: str = ""
 
 
@@ -128,6 +142,8 @@ def choose_tiling(layer: LayerDesc) -> TilingPlan:
     h_in, w_in = layer.h_in, layer.w_in
     cin, cout = layer.cin, layer.cout
     k = layer.k_h
+    # Hardware always processes 32-row spatial tiles regardless of model input height.
+    tile_h = 32
 
     # Guide §3.1: deformable / bilinear uses 6-row line buffer; standard conv uses 4.
     if layer.deformable:
@@ -137,67 +153,100 @@ def choose_tiling(layer: LayerDesc) -> TilingPlan:
         ky_outer = 3 if k == 3 else 1
         ic_inner = 2 if cin > 1 else 1
         h_out_per_step = 4
-        load_total_num = max(1, h_in // h_out_per_step)
+        load_total_num = max(1, tile_h // h_out_per_step)
         padding_num = 1
         acc_mode = 4        # pooling accumulate mode for deformable
         store_mode = 3      # deformable store mode
-        # line_buffer_reshape=1 for sub-128 widths (guide §3.2)
-        lbr = 1 if w_in <= 128 else 0
-        # Deformable channel grouping (guide §3.3): ic_inner handles the reduction
+        lbr = 0             # golden: deformable layers use lbr=0
         cin_group = 4 if cin <= 8 else 8
         wpar = 0 if cout <= 8 else 1
         wt = 12  # bilinear WeightLoader transnum for deformable
+        wl_lrs = 5          # WeightLoader.line_buffer_row_shift for deformable
+        wl_ipc = 6          # WeightLoader.is_padding_col for deformable
+        storer_step = 4     # golden: deformable DS base_addrs_res += 4 per cal_idx
     else:
-        line_rows = 4
         read_mode = 0
         bilinear = 0
         ky_outer = 1
         ic_inner = 1
-        # line_buffer_reshape=1 for 128×72 and smaller (guide §3.2)
-        lbr = 1 if w_in <= 128 else 0
 
         # ── H-step and cin-group templates ──────────────────────────────────
+        padding_num = 1  # default; 1×1 conv templates override to 0
         if cin == 1 and k == 3:
             # Template C: single-channel 3×3 (FSRCNN first_part / UNet L0).
-            # Hardware packs the entire spatial kernel in one WL via parall_mode=2.
-            # One output row per outer step keeps line-buffer load simple.
             h_out_per_step = 1
             cin_group = 1
             wpar = 2
             wt = 9
+            line_rows = 3       # golden: 3 input rows per DL call for cin=1 k=3
+            lbr = 0
+            wl_lrs = 0
+            wl_ipc = 3
+            storer_step = 1     # golden: Template C DS += 1 (h_out_per_step=1)
         elif k == 1 and cin <= 8:
             # Template D: 1×1 conv with small cin (FSRCNN L10 style).
-            # parall_mode=2 packs all cin channels into a single WeightLoader call.
-            # No cin inner loop; transnum = cin accounts for all input channels.
             h_out_per_step = 1
             cin_group = 1
             wpar = 2
             wt = cin
+            line_rows = 2       # golden: 2 rows per DL for small-cin 1×1
+            lbr = 0
+            wl_lrs = 4
+            wl_ipc = 0
+            padding_num = 0     # 1×1 conv: no spatial padding needed
+            storer_step = 1     # golden: Template D DS += 1 (h_out_per_step=1)
         elif k == 1 and cin > 8:
             # Template E: 1×1 conv with large cin (FSRCNN L1 style).
-            # 4 output rows per outer step; cin inner loop walks channel groups.
             h_out_per_step = 4
             cin_group = 8
             wpar = 0
-            wt = 1
+            wt = 4              # golden: 4 weights per ic_group (not 1)
+            line_rows = 4
+            lbr = 3             # golden: lbr=3 for Template E
+            wl_lrs = 0
+            wl_ipc = 0
+            padding_num = 0     # 1×1 conv: no spatial padding needed
+            storer_step = 4     # golden FSRCNN L1: DS += 4 (h_out_per_step=4)
         elif k == 3 and cin > 8 and cout <= 8:
             # Template F: 3×3 conv with large cin but small cout (FSRCNN L11 style).
-            # Uses explicit ky×ic inner loops so the accumulator can span many
-            # input channels before a single DataStorer output.
             h_out_per_step = 4
             ky_outer = 3
             cin_group = 8
             wpar = 0
-            wt = 6   # 6 = weights per (ky, ic_group) pair for cout≤8 parallelism
+            wt = 6
+            line_rows = 4
+            lbr = 3             # golden: lbr=3 for Template F
+            wl_lrs = 2
+            wl_ipc = 3
+            # Default Template F step=4 (per golden's "一次算出4行" when no
+            # pixelshuffle). plan_all() will override to 128 if pixelshuffle
+            # (acc_mode=5) applies — matching FSRCNN last_part which stores
+            # 4-channel output to fsrcnn_output_buffer (4 values per row).
+            storer_step = 4
         else:
             # Template A/B: standard 3×3 conv, two output rows per outer step.
+            # This is also the fall-through for any (cin, cout, k) combination
+            # that didn't match a specialized template above. Warn so callers
+            # can verify correctness — A/B parameters are only validated for
+            # the UNet/FSRCNN standard 3×3 shapes.
+            if not (k == 3):
+                print(
+                    f"[WARNING] tiling: layer {layer.idx} (op={layer.op}, "
+                    f"cin={cin}, cout={cout}, k={k}) matched no specialized "
+                    f"template — falling back to Template A/B. Verify tiling "
+                    f"correctness for this layer."
+                )
             h_out_per_step = 2
             cin_group = 8 if cin > 8 else (4 if cin > 1 else 1)
             wpar = 0 if cout <= 8 else 1
             wt = 9 if k == 3 else k * k
+            line_rows = 4
+            lbr = 1 if w_in <= 128 else 0
+            wl_lrs = 1
+            wl_ipc = 1
+            storer_step = 2     # golden Template A/B: DS += 2 (h_out_per_step=2)
 
-        load_total_num = max(1, h_in // h_out_per_step)
-        padding_num = 1
+        load_total_num = max(1, tile_h // h_out_per_step)
         acc_mode = 0
         store_mode = 0
 
@@ -210,6 +259,26 @@ def choose_tiling(layer: LayerDesc) -> TilingPlan:
 
     w_micro = _pick_w_micro_tile(w_in)
     macros = _macro_w_tiles(w_in)
+
+    # Per-template QuantLoader parameters (matched to golden sr_inst per-layer values)
+    if layer.deformable:
+        q_mode = 5
+        q_transnum = max(layer.cout, 8)
+    elif cin == 1 and k == 3:           # Template C
+        q_mode = 3
+        q_transnum = cout
+    elif k == 1 and cin <= 8:           # Template D
+        q_mode = 3
+        q_transnum = cout
+    elif k == 1 and cin > 8:            # Template E
+        q_mode = 5
+        q_transnum = cout
+    elif k == 3 and cin > 8 and cout <= 8:  # Template F
+        q_mode = 5
+        q_transnum = cout
+    else:                               # Template A/B
+        q_mode = 0
+        q_transnum = 4
 
     return TilingPlan(
         layer_idx=layer.idx,
@@ -230,8 +299,12 @@ def choose_tiling(layer: LayerDesc) -> TilingPlan:
         ic_inner=ic_inner,
         acc_mode=acc_mode,
         store_mode=store_mode,
-        quant_mode=0,
-        quant_transnum=4,
+        quant_mode=q_mode,
+        quant_transnum=q_transnum,
+        tile_h=tile_h,
+        wl_line_buffer_row_shift=wl_lrs,
+        wl_is_padding_col=wl_ipc,
+        storer_step=storer_step,
         notes="deformable" if layer.deformable else "standard conv",
     )
 
@@ -288,4 +361,12 @@ def plan_all(layers: List[LayerDesc]) -> List[TilingPlan]:
         acc, store = _derive_acc_store_mode(L, layers)
         P.acc_mode = acc
         P.store_mode = store
+        # Last deformable conv uses quant_mode=7 (golden sr_codegen L9 pattern).
+        if L.op == "deformable_conv2d" and acc == 2:
+            P.quant_mode = 7
+        # Pixelshuffle output (acc_mode=5) — used by FSRCNN last_part. The
+        # DataStorer writes 4 values per row to fsrcnn_output_buffer, so the
+        # per-iteration base_addrs_res stride is 128 (golden line 3659).
+        if acc == 5:
+            P.storer_step = 128
     return plans

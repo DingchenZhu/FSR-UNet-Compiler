@@ -12,23 +12,26 @@ import copy
 from pathlib import Path
 from typing import Any, Dict, List
 
+# DataLoader dependency threshold: distinguishes layer-0 DataLoaders reading
+# from the offchip DDR preload (load_model==0, bas_addr < threshold) from
+# subsequent rows (load_model==1, bas_addr >= threshold).
+#
+# 576 = 144 (UNet input image height in rows) * 4 (offchip transnum per row).
+# This is UNet-specific. For other input resolutions the threshold must be
+# updated — FSRCNN's 36×64 input happens to still satisfy the layer-0 branch
+# because its layer-0 bas_addr values stay well below 576.
+#
+# TODO: make this configurable (e.g. derive from the first layer's h_in and
+# offchip transnum) when supporting different input resolutions generically.
+_LAYER0_DL_BAS_ADDR_THRESHOLD = 144 * 4  # UNet-specific; update for other resolutions
+
 
 def align_instruction_fields(code_list: List[Dict[str, Any]]) -> None:
     """Add golden/encoder fields that are missing from minimal isa.dispatch records."""
     for c in code_list:
         op = c.get("op_code")
-        if op == "OffchipDataLoader":
-            c.setdefault("is_compression", 0)
-        elif op == "DataLoader":
-            c.setdefault("offchip_read_mode", 0)
-            c.setdefault("is_compression", 0)
-        elif op == "WeightLoader":
-            c.setdefault("is_skip", 2)
-            c.setdefault("is_new", 1)
-        elif op == "DataStorer":
+        if op == "DataStorer":
             c.setdefault("is_offset", 0)
-        elif op == "OffchipDataStorer":
-            c.setdefault("is_compression", 0)
 
 
 def add_instruction_dependencies(code_list: List[Dict[str, Any]]) -> int:
@@ -107,13 +110,13 @@ def add_instruction_dependencies(code_list: List[Dict[str, Any]]) -> int:
                     if dataloader_count == 2 or code_list[d]["op_code"] == "OffchipDataStorer":
                         break
                 if dataloader_count < 2:
-                    if code_list[i].get("bas_addr", 0) < 144 * 4:
+                    if code_list[i].get("bas_addr", 0) < _LAYER0_DL_BAS_ADDR_THRESHOLD:
                         for d in range(i - 1, -1, -1):
                             if code_list[d]["op_code"] == "OffchipDataLoader":
                                 if code_list[d].get("src_buffer_idx") == 0 and code_list[d].get("load_model") == 0:
                                     code_list[i]["dependency"].append(d)
                                     break
-                    if code_list[i].get("bas_addr", 0) >= 144 * 4:
+                    if code_list[i].get("bas_addr", 0) >= _LAYER0_DL_BAS_ADDR_THRESHOLD:
                         for d in range(i - 1, -1, -1):
                             if code_list[d]["op_code"] == "OffchipDataLoader":
                                 if code_list[d].get("src_buffer_idx") == 0 and code_list[d].get("load_model") == 1:

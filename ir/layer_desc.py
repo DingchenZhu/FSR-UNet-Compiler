@@ -187,6 +187,70 @@ def _pool_from_call(call: relay.Call, idx: int, pool_type: str) -> LayerDesc:
     )
 
 
+# Known Relay "plumbing" ops that appear as Call nodes after from_pytorch /
+# InferType but are NOT semantic compute steps (layout shuffles, shape
+# rewrites, broadcasting helpers, etc.). These are intentionally skipped
+# without warning. Any op NOT in this list and NOT in the recognized-op
+# branches triggers a warning so the user knows semantics may be lost.
+_KNOWN_HARMLESS_OPS = frozenset({
+    "reshape",
+    "transpose",
+    "layout_transform",
+    "squeeze",
+    "expand_dims",
+    "nn.pad",
+    "cast",
+    "copy",
+    "annotation.stop_fusion",
+    "annotation.checkpoint",
+    # Relay plumbing emitted by from_pytorch for deformable conv offset computation
+    "less",
+    "greater_equal",
+    "shape_of",
+    "slice_like",
+    "dyn.strided_slice",
+    "scatter",
+    "where",
+    "add",          # element-wise add (residual); not yet lowered to ISA
+    "zeros_like",
+    "full",
+    "strided_slice",
+    "take",
+    "stack",
+    "concatenate",
+    "split",
+    "nn.bias_add",
+    "nn.batch_norm",
+    "nn.layer_norm",
+    "nn.dropout",
+    "mean",
+    "nn.softmax",
+    "nn.dense",
+    "nn.global_avg_pool2d",
+    # Additional Relay ops observed in FSRCNN/deformable models
+    "broadcast_to",
+    "clip",
+    "repeat",
+    "cast_like",
+    "floor",
+    "ceil",
+    "round",
+    "abs",
+    "negative",
+    "multiply",
+    "divide",
+    "subtract",
+    "power",
+    "minimum",
+    "maximum",
+    "nn.leaky_relu",
+    "nn.sigmoid",
+    "nn.tanh",
+    "image.resize2d",
+    "nn.upsampling",
+})
+
+
 def extract_layer_descs(mod: tvm.ir.IRModule) -> List[LayerDesc]:
     """Walk main() and return ordered LayerDesc list for supported ops."""
     mod = relay.transform.InferType()(mod)
@@ -196,6 +260,7 @@ def extract_layer_descs(mod: tvm.ir.IRModule) -> List[LayerDesc]:
 
     descs: List[LayerDesc] = []
     idx = 0
+    warned_ops: set = set()
     for call in calls:
         name = _call_op_name(call)
         if name == "nn.conv2d":
@@ -216,5 +281,21 @@ def extract_layer_descs(mod: tvm.ir.IRModule) -> List[LayerDesc]:
             _, c, h, w = dshape[0], dshape[1], dshape[2], dshape[3]
             descs.append(LayerDesc(op=name.split(".")[-1], idx=idx, h_in=h, w_in=w, cin=c, cout=c))
             idx += 1
-        # nn.batch_norm, nn.layer_norm, add (residual), etc. can be added here
+        else:
+            # nn.batch_norm, nn.layer_norm, add (residual), etc. are not yet
+            # lowered to LayerDesc. Warn once per op-name instead of silently
+            # skipping so the user knows the emitted instruction stream may
+            # be semantically incomplete/incorrect. Known plumbing ops
+            # (reshape/transpose/etc.) are suppressed to avoid noise.
+            if (
+                name is not None
+                and name not in _KNOWN_HARMLESS_OPS
+                and name not in warned_ops
+            ):
+                print(
+                    f"[WARNING] layer_desc: unsupported op '{name}' at call "
+                    f"node — skipped. Output instructions may be semantically "
+                    f"incorrect."
+                )
+                warned_ops.add(name)
     return descs

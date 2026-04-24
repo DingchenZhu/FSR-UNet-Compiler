@@ -1,0 +1,1 @@
+- [SDSR Compiler Project Context](project_sdsr.md) — SDSR accelerator compiler, 4-stage pipeline, golden-first correctness constraint

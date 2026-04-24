@@ -54,6 +54,10 @@ class PipelineConfig:
     image_transnum: int = 576          # 144×4 for UNet 144-row input tile
     inter_layer_transnum: Optional[int] = None  # 64 (32×2) for UNet→FSRCNN boundary
     inter_layer_bas_addr: int = 576
+    # load_next OffchipDataLoader parameters (sr_inst golden: transnum=64, load_model=1, bas_addr=576)
+    load_next_transnum: int = 64
+    load_next_load_model: int = 1
+    load_next_bas_addr: int = 576
     # Terminal OffchipDataStorer (FSRCNN sr_inst() tail write-back).
     # Defaults match sr_inst(): src_buffer='fsrcnn_output_buffer', transnum=1024, base_addr=0.
     emit_offchip_store: bool = True
@@ -165,6 +169,9 @@ def run_pipeline(
         image_transnum=cfg.image_transnum,
         inter_layer_transnum=cfg.inter_layer_transnum,
         inter_layer_bas_addr=cfg.inter_layer_bas_addr,
+        load_next_transnum=cfg.load_next_transnum,
+        load_next_load_model=cfg.load_next_load_model,
+        load_next_bas_addr=cfg.load_next_bas_addr,
         emit_offchip_store=cfg.emit_offchip_store,
         offchip_store_src_buffer=cfg.offchip_store_src_buffer,
         offchip_store_transnum=cfg.offchip_store_transnum,

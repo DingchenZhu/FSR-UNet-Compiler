@@ -25,17 +25,27 @@ from typing import List
 
 from ir.layer_desc import LayerDesc
 
-_OFFSET_GEN_COUT = 18   # 2 × 9 offsets for a 3×3 deformable kernel
+# Historical note: for a 3×3 deformable kernel the offset-gen conv has cout=18
+# (2 × 3 × 3). For a 5×5 deformable kernel it would be cout=50 (2 × 5 × 5).
+# We no longer hardcode 18 — the expected cout is derived from the following
+# deformable_conv2d's kernel size so other kernels fuse correctly.
+_OFFSET_GEN_COUT_3x3 = 18   # kept only for documentation / legacy reference
 
 
 def fuse_offset_generators(layers: List[LayerDesc]) -> List[LayerDesc]:
-    """Replace each (pool2d + conv2d(cout=18)) pair preceding a deformable_conv2d
-    with a single op='offset_gen' LayerDesc.  Layer indices are reassigned after fusion.
+    """Replace each (pool2d + conv2d) pair preceding a deformable_conv2d with a
+    single op='offset_gen' LayerDesc. Layer indices are reassigned after fusion.
 
-    Recognition rule:
+    Recognition rule (structural, not magic-constant based):
         layers[i].op   == 'pool2d'
-        layers[i+1].op == 'conv2d' and layers[i+1].cout == 18
+        layers[i+1].op == 'conv2d'
         layers[i+2].op == 'deformable_conv2d'
+        layers[i+1].cout == 2 * layers[i+2].k_h * layers[i+2].k_w
+            (each deformable sample needs an (x, y) offset, hence the factor 2)
+
+    If a pool2d+conv2d pair appears with the expected cout shape but no
+    deformable_conv2d follows, we emit a warning and skip fusion so callers
+    can investigate instead of silently generating wrong code.
 
     Returned list has the conv2d entry removed; pool2d becomes offset_gen.
     Indices are renumbered sequentially starting from 0.
@@ -49,8 +59,9 @@ def fuse_offset_generators(layers: List[LayerDesc]) -> List[LayerDesc]:
             L.op == "pool2d"
             and i + 2 < n
             and layers[i + 1].op == "conv2d"
-            and layers[i + 1].cout == _OFFSET_GEN_COUT
             and layers[i + 2].op == "deformable_conv2d"
+            and layers[i + 1].cout
+                == 2 * layers[i + 2].k_h * layers[i + 2].k_w
         ):
             conv = layers[i + 1]
             fused.append(LayerDesc(
@@ -72,6 +83,23 @@ def fuse_offset_generators(layers: List[LayerDesc]) -> List[LayerDesc]:
             ))
             i += 2  # consume pool2d (i) and conv2d (i+1); deformable_conv2d processed next
         else:
+            # Detect "looks like an offset generator but no deformable follows":
+            # pool2d + conv2d(cout == 18 or any even cout==2*k*k) with NO
+            # deformable_conv2d directly after. Warn so the user can investigate.
+            if (
+                L.op == "pool2d"
+                and i + 1 < n
+                and layers[i + 1].op == "conv2d"
+                and layers[i + 1].cout % 2 == 0
+                and not (
+                    i + 2 < n and layers[i + 2].op == "deformable_conv2d"
+                )
+            ):
+                print(
+                    f"[WARNING] fuse_offset_generators: found pool2d+conv2d"
+                    f"(cout={layers[i + 1].cout}) at layer idx={L.idx} but no "
+                    f"deformable_conv2d follows — skipping fusion"
+                )
             fused.append(L)
             i += 1
 

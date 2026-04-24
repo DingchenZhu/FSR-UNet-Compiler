@@ -1,1 +1,3 @@
 - [sr_inst() golden reference](reference_sr_inst_golden.md) — how to regenerate sr_inst() standalone golden, the 32×32 block assumption, and 12-layer structure
+- [FSRCNN golden diff is field-filtered](feedback_diff_verification.md) — skip set and how to reproduce 1273/1274 line counts via `run_pipeline()` with emit_image_load=False
+- [storer_step per-template stride](project_storer_step.md) — TilingPlan.storer_step replaces hardcoded DS base_addrs_res stride, golden-verified values per template

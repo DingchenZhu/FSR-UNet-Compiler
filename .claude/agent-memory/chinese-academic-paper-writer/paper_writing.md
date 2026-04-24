@@ -59,4 +59,6 @@ type: project
 - Future work: quant calibration integration, memory layout modeling, op coverage expansion, UNet alignment, load_next hoisting
 - Closing sentence frames the system as an "instruction-correct frontend prototype" on path toward full-stack production compiler
 
+**Tutorial for owner**: docs/tutorial_for_owner.md — written 2026-04-24, colloquial Chinese style (not academic), covers hardware, all 4 pipeline stages, 6 key bugs with root-cause stories, validation results, and 8 FAQ answers for tomorrow's demo. Target reader: project PI who knows the big picture but not code details.
+
 **How to apply**: Maintain consistency with these arguments when extending or revising the paper. Do not contradict findings established here.

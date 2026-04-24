@@ -6,6 +6,164 @@
 
 ---
 
+## 硬件架构参考（SDSR.pdf）
+
+> 来源：`/home/hansz/Documents/SDSR.pdf`，15页，复旦大学 IA&C Lab 设计的 SDSR CNN 超分辨率加速器。
+
+### 芯片整体规格
+
+| 指标 | 值 |
+|------|----|
+| 核心频率 | 200 MHz |
+| 核心电压 | 0.9V（Core），2.5V（PAD），1.8V（Interface） |
+| 功耗 | <655 mW（总），SRPU 351 mW |
+| 面积 | 6 mm² |
+| 指令宽度 | 20-bit ISA |
+| 数据总线 | 10-bit pixel × 2，共 46bit |
+| SRAM | 626K（量化权重）+ 98K |
+| 帧率 | 107 fps（4× SR，1080P 输入） |
+| 能效 | 2.08 mJ/frame（4× SR，4K） |
+| 数据流 | 混合数据流（Mixed dataflow） |
+
+### MAC 阵列
+
+- **并行宽度**：128 路 MAC（每周期处理 128 个输出特征点）
+- **权重精度**：Sint 8bit
+- **激活精度**：Uint 10bit
+- **累加寄存器**：ACC 28bit（标准），ACC 30bit（bicubic 特殊路径）
+- **ACC 寄存器总量**：128 × 8 × 2 = **2048 个 28bit 寄存器**（双 ping-pong）
+- **时钟门控**：必须正确实现，对功耗影响极大
+- **分组方式**：每组输入 32 通道，权重 4 通道，共 8 组并行
+
+### 量化流水线
+
+```
+psum (30bit)
+  → + q_bias → 31bit
+  → <0 判断（relu 裁剪）
+  → × mul_scale_int (12bit scale × 43bit 中间值)
+  → >> shift_num (6bit，含四舍五入右移)
+  → − zero_point
+  → quant_out (10bit)
+```
+
+- **参数粒度**：每 **8 个输出通道**共享一组：`2× SCALE_INT`、`2× shift_num`、`zero_point`、`q_bias`
+- **量化阵列**：128 路 psum → 128 路 quant_out（Quant Array 并行）
+- **量化寄存器（双 buffer）**：
+  - ACC quant reg：8 个元素，`Is_new` 控制累加 / 覆写，按 `idx` 读写
+  - 双 quant reg：2 个槽用于 ping-pong（`quant_config_idx` 0/1 切换）
+
+### 存储层次
+
+```
+External Memory（DDR）
+       ↓ OffChipDataLoader
+Input Buffer（SRAM）
+       ↓ DataLoader
+Line Buffer（双 buffer，最多 6 行，宽 128）
+       ↓
+MacArray（128路并行）
+       ↓
+ACC Reg（双 ping-pong，2048×28bit）
+       ↓ DataStorer（经 Quant 量化）
+Input Buffer（SRAM，写回 ping-pong buffer）
+       ↓ OffChipStorer
+External Memory（DDR）
+
+并行加载路径：
+  WeightLoader  → Weight SRAM     → MacArray
+  QuantLoader   → Quant SRAM      → Quant Reg → DataStorer
+  OffsetLoader  → Offset Reg      → Bilinear  → MacArray（可变形卷积）
+```
+
+### 7 类指令单元信号接口
+
+**OffChipDataLoader**
+- 输入：`off_chip_data_loader_ins`、`pixel_data`
+- 输出：`input_buffer_we`、`input_buffer_wa`、`input_buffer_di`、`input_buffer_idx`
+- 功能：DDR → Input Buffer（SRAM），DMA 搬运
+
+**DataLoader**
+- 输入：`data_loader_ins`、`input_buffer_we/wa/di`、`zero_point_all`
+- 输出：`line_buffer_we`、`line_buffer_load_idx`、`line_buffer_reshape`、`Is_padding_row`、`Is_padding_col`、`zero_point`、`kernal_size`、`data_out`、`line_buffer_row_shift`、`cycle_num`、`Is_bilinear`
+- 功能：Input Buffer → Line Buffer，处理 padding 与特征图宽度重排
+
+**WeightLoader**
+- 输入：`weight_loader_ins`、`weight_data_in`
+- 输出：`weight_data_out`、`kernel_idx`、`weight_valid`、`is_new`、`acc_reg_comp_idx`、`line_buffer_comp_idx`
+- 功能：Weight SRAM → MAC，驱动 MAC 计算，`is_new` 控制 ACC 清零或累加
+
+**QuantLoader**
+- 输入：`quant_loader_ins`、`quant_data_in`
+- 输出：`q_bias`、`scale_int`、`scale_shift`、`zero_point_o`、`all_zero_point`、`quant_reg_idx`、`quant_out_valid`
+- 功能：预加载量化参数到 Quant Reg（双 buffer 槽 0/1）
+
+**DataStorer**
+- 输入：`data_storer_ins`、`acc_reg_out`、`q_bias`、`scale_int`、`scale_shift`、`zero_point_o`
+- 输出：`acc_reg_out_idx`、`input_buffer_we/wa/bits`、`input_buffer_idx`、`quant_reg_idx`、`quant_out_valid`
+- 功能：ACC Reg → Quant → Input Buffer，支持 pooling / pixelshuffle / bicubic 模式
+
+**OffChipStorer（OffChipDataStorer）**
+- 输入：`off_chip_storer_ins`
+- 输出：`pixel_out`
+- 功能：Input Buffer → DDR，写出 SR 结果
+
+**OffsetLoader**
+- 输入：`offset_loader_ins`、`offset_data_we`、`offset_data`
+- 输出：`offset_data_out`、`offset_reg_idx`、`offset_data_adr`、`offset_input_en`、`offset_valid`、`bilinear_en`
+- 功能：加载可变形卷积偏移量到 Offset Reg，驱动 Bilinear 模块
+
+### Line Buffer 机制
+
+- **双 buffer**：`line_buffer_idx` ∈ {0, 1}（ping-pong）
+- **行容量**：`line_buffer_row_idx` 0–5，最多 **6 行**，宽 128 像素
+- **时序**：8 个 cycle 加载时序（对应 3×3 kernel + padding 行）
+- `line_buffer_reshape`：特征图宽度重排信号
+- `line_buffer_row_shift`：行移位信号
+
+### DataLoader FSM
+
+```
+空闲
+  ↓ 指令握手 && is_off_load=1
+加载请求 → 请求握手成功
+  ↓
+数据加载（DMA: DDR→SRAM），transfer_cnt → transfer_num-1
+  ↓
+[返回空闲]
+
+空闲
+  ↓ 指令握手 && is_off_load=0
+计算读取（SRAM→Line Buffer），transfer_cnt → transfer_num-1
+  ↓
+[返回空闲]
+```
+
+地址范围：0–128（Input Buffer 深度）
+
+### 双线性插值（可变形卷积，OffsetLoader + Bilinear）
+
+| offset 象限 | 处理方式 |
+|-------------|---------|
+| offset_x≠0 && offset_y≠0 | 4点双线性插值 |
+| offset_x=0 && offset_y≠0 | 单列线性插值 |
+| offset_x≠0 && offset_y=0 | 单行线性插值 |
+| offset_x=0 && offset_y=0 | 直接取整数点，无插值 |
+
+### 编译器关键约束（从硬件推导）
+
+| 约束 | 值 | 对编译器的影响 |
+|------|----|---------------|
+| MAC 并行宽度 | 128 | tile_h=32 时 4×tile 一轮，FSRCNN / UNet 均适配 |
+| ACC Reg 容量 | 2048（双 buffer） | `line_buffer_idx` 必须与 `acc_reg_comp_idx` 严格同步 |
+| Line Buffer 行数 | 最多 6 行 | 3×3 卷积 `ky_outer` 上限由此确定 |
+| 量化参数粒度 | 每 8 oc 一组 | `QuantLoader transnum = ceil(cout/8)` |
+| 权重格式 | Sint 8bit | 权重量化后在 Weight SRAM 存储格式 |
+| 激活格式 | Uint 10bit | 特征图中间表示精度 |
+| Quant Reg 槽 | 2 槽（0/1） | `quant_config_idx` 每层 emit 后 toggle |
+
+---
+
 ## 2026-04-22  项目初始化
 
 ### 工作目录创建

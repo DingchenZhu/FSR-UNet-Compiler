@@ -90,6 +90,8 @@ class InstructionEmitter:
             bas_addr=self.state.quant_bas_addr,
         )
         self.state.quant_bas_addr += transnum
+        # quant_config_idx toggle is the caller's responsibility — done once
+        # after all DataStorers for the layer are emitted, not here.
 
     def _emit_standard_conv(self, layer: LayerDesc, plan: TilingPlan) -> None:
         """Template A: QuantLoader → per macro W-tile (DataLoader, WeightLoader, DataStorer).
@@ -107,13 +109,16 @@ class InstructionEmitter:
         else:
             dest_buf = "b" if st.feature_buf == "a" else "a"
 
-        self.emit_quant_loader(st.conv_layer_counter, transnum=plan.quant_transnum, quant_mode=plan.quant_mode)
+        self.emit_quant_loader(layer.idx, transnum=plan.quant_transnum, quant_mode=plan.quant_mode)
         for macro_idx, (w0, w_sz, bas_hint) in enumerate(plan.w_macro_tiles):
             self._emit_w_macro_tile(layer, plan, w0, w_sz, bas_hint, macro_idx, dest_buf)
         st.weight_bas_addr[0] += plan.weight_transnum_base * plan.cin_group * plan.ky_outer
         # Toggle feature_buf so the next layer reads from the buffer we just
         # wrote to. (Safe even after the terminal layer — nothing reads it.)
         st.feature_buf = dest_buf
+        # QuantLoader and all DataStorers in this layer share the same
+        # quant_config_idx; toggle once here after all tiles are done.
+        st.quant_config_idx = 1 - st.quant_config_idx
 
     def _emit_w_macro_tile(
         self,
@@ -130,22 +135,33 @@ class InstructionEmitter:
         padding_num = plan.padding_num
         st.dataloader_bas_addr = bas_hint
         # Right-half output base: matches sd_codegen h_in*4 offset
-        st.storer_bas_addr = 0 if macro_idx == 0 else layer.h_in * 4
+        st.storer_bas_addr = 0 if macro_idx == 0 else plan.tile_h * 4
 
         for load_idx in range(load_total):
-            if load_idx < padding_num:
-                is_padding_row = 1
-            elif load_idx > load_total - 1 - padding_num:
-                is_padding_row = 5
-            else:
-                is_padding_row = 0
-
             # ky × cin inner loops.
             # plan.ky_outer == 1 for most standard convs (hardware handles 3×3
             # kernel implicitly via the line buffer).  plan.ky_outer == 3 for
             # Template F (large-cin 3×3 with small cout, e.g. FSRCNN L11) where
             # the kernel-row dimension is explicit in software.
+            # For multi-ky templates, padding applies per (outer_tile, ky_g):
+            #   first outer tile AND ky=0 → is_padding_row=1
+            #   last outer tile AND ky=ky_outer-1 → is_padding_row=5
+            # For single-ky templates, padding is per outer tile (all cin_g share).
             for ky_g in range(plan.ky_outer):
+                if plan.ky_outer > 1:
+                    if load_idx == 0 and ky_g == 0:
+                        is_padding_row = 1
+                    elif load_idx == load_total - 1 and ky_g == plan.ky_outer - 1:
+                        is_padding_row = 5
+                    else:
+                        is_padding_row = 0
+                else:
+                    if load_idx < padding_num:
+                        is_padding_row = 1
+                    elif load_idx > load_total - 1 - padding_num:
+                        is_padding_row = 5
+                    else:
+                        is_padding_row = 0
                 for cin_g in range(plan.cin_group):
                     isa.DataLoader.dispatch(
                         layer_idx=layer.idx,
@@ -157,15 +173,15 @@ class InstructionEmitter:
                         # Layer 0 sources from the DDR-preloaded offchip input
                         # buffer; subsequent layers follow ping-pong alternation.
                         src_buffer_idx="offchip_input_buffer" if layer.idx == 0 else st.feature_buf,
-                        bas_addr=st.dataloader_bas_addr + layer.h_in * cin_g,
+                        bas_addr=st.dataloader_bas_addr + plan.tile_h * cin_g,
                     )
 
                     isa.WeightLoader.dispatch(
                         acc_reg_comp_idx=st.acc_reg_idx,
                         kernal_size=0 if layer.k_h == 3 else 1,
-                        line_buffer_row_shift=1,
+                        line_buffer_row_shift=plan.wl_line_buffer_row_shift,
                         line_buffer_idx=st.line_buffer_idx,
-                        is_padding_col=1,
+                        is_padding_col=plan.wl_is_padding_col,
                         weight_parall_mode=plan.weight_parall_mode,
                         # First (ky, cin) pair overwrites the accumulator; rest accumulate.
                         is_new=0 if (ky_g == 0 and cin_g == 0) else 1,
@@ -179,30 +195,37 @@ class InstructionEmitter:
             # Advance DataLoader base ONCE per cal_idx (outer H step), not per cin_g.
             st.dataloader_bas_addr += 2 if load_idx < padding_num else 4
 
-            # DataStorer uses the SAME acc_reg_idx the WeightLoader just wrote to.
-            # acc_reg_idx toggles ONCE per cal_idx, AFTER DataStorer (not between WL & DS).
+            # DataStorer: mode-specific fields derived from store_mode / acc_mode.
+            #   store_mode=3 (pool-while-store): is_pooling=1, pooling_out_mode=3
+            #   acc_mode=5  (pixelshuffle output): is_pixelshuffle=1, stride=0, transfer_num=0, is_bicubic_add=1, pixelshuffle_out_mode=1
+            is_pool_store = (plan.store_mode == 3)
+            is_pixshuffle = (plan.acc_mode == 5)
             isa.DataStorer.dispatch(
                 quant_config_idx=st.quant_config_idx,
-                pixelshuffle_out_mode=0,
-                is_pixelshuffle=0,
-                pooling_out_mode=0,
+                pixelshuffle_out_mode=1 if is_pixshuffle else 0,
+                is_pixelshuffle=1 if is_pixshuffle else 0,
+                pooling_out_mode=3 if is_pool_store else 0,
                 pooling_out_new=0,
-                is_pooling=0,
+                is_pooling=1 if is_pool_store else 0,
                 reg_out_idx=st.acc_reg_idx,
                 acc_mode=plan.acc_mode,
-                transfer_num=1,
+                transfer_num=0 if is_pixshuffle else 1,
                 store_mode=plan.store_mode,
-                stride=layer.h_in,
+                stride=0 if is_pixshuffle else plan.tile_h,
                 base_addr_pooling=0,
                 base_addrs_res=st.storer_bas_addr,
-                is_bicubic_add=0,
+                is_bicubic_add=1 if is_pixshuffle else 0,
                 is_first_or_last_row=0,
                 is_mask=0,
                 is_new=0,
                 dest_buffer_idx=dest_buf,
             )
             st.acc_reg_idx = 1 - st.acc_reg_idx
-            st.storer_bas_addr += 2
+            # Per-iteration DS base_addrs_res increment. Was hardcoded as 2
+            # (Template A/B default) — now driven by plan.storer_step so each
+            # template uses its golden-correct stride (C/D=1, E=4, A/B=2,
+            # pixelshuffle=128).
+            st.storer_bas_addr += plan.storer_step
 
     def _emit_offset_gen(self, layer: LayerDesc, plan: TilingPlan) -> None:
         """OffsetGenerator: QuantLoader + 3×(DataLoader+WeightLoader) + DataStorer(offset_reg).
@@ -214,7 +237,7 @@ class InstructionEmitter:
         acc_reg_idx is NOT toggled inside the ky loop — only after DataStorer.
         """
         st = self.state
-        self.emit_quant_loader(st.conv_layer_counter, transnum=plan.quant_transnum, quant_mode=plan.quant_mode)
+        self.emit_quant_loader(layer.idx, transnum=plan.quant_transnum, quant_mode=plan.quant_mode)
         st.dataloader_bas_addr = plan.data_bas_addr
         st.storer_bas_addr = 0
 
@@ -274,6 +297,7 @@ class InstructionEmitter:
             dest_buffer_idx="offset_reg",
         )
         st.acc_reg_idx = 1 - st.acc_reg_idx
+        st.quant_config_idx = 1 - st.quant_config_idx
         st.weight_bas_addr[1] += plan.weight_transnum_base * plan.ky_outer
 
     def _emit_deformable_conv(self, layer: LayerDesc, plan: TilingPlan) -> None:
@@ -297,8 +321,8 @@ class InstructionEmitter:
         else:
             dest_buf = "b" if st.feature_buf == "a" else "a"
 
-        self.emit_quant_loader(self.state.conv_layer_counter, transnum=max(plan.quant_transnum, layer.cout), quant_mode=plan.quant_mode)
-        cal_total = max(1, layer.h_in // plan.h_out_per_step)
+        self.emit_quant_loader(layer.idx, transnum=plan.quant_transnum, quant_mode=plan.quant_mode)
+        cal_total = plan.load_total_num
         padding_num = plan.padding_num
 
         st.dataloader_bas_addr = 0
@@ -333,7 +357,7 @@ class InstructionEmitter:
                         # Deformable conv reads the live feature map — follow
                         # the ping-pong state rather than a hardcoded buffer.
                         src_buffer_idx=st.feature_buf,
-                        bas_addr=st.dataloader_bas_addr + ic_g * 32 + (ky if cal_idx > 0 else 0),
+                        bas_addr=st.dataloader_bas_addr + ic_g * plan.tile_h + (ky if cal_idx > 0 else 0),
                     )
                     # No toggle here — DataLoader and WeightLoader share the same line_buffer_idx.
                     # sr_codegen uses separate managers both starting at 0, so they stay in sync.
@@ -355,19 +379,22 @@ class InstructionEmitter:
 
                 st.offset_reg_idx = 1 - st.offset_reg_idx
 
+            # Last deformable conv (acc_mode=2): no pooling, stride=0.
+            # Other deformable convs (acc_mode=4): pool-while-store.
+            is_last_dconv = (plan.acc_mode == 2)
             isa.DataStorer.dispatch(
                 quant_config_idx=st.quant_config_idx,
                 pixelshuffle_out_mode=0,
                 is_pixelshuffle=0,
-                pooling_out_mode=3,
+                pooling_out_mode=0 if is_last_dconv else 3,
                 pooling_out_new=0,
-                is_pooling=1,
+                is_pooling=0 if is_last_dconv else 1,
                 reg_out_idx=st.acc_reg_idx,
                 acc_mode=plan.acc_mode,
                 transfer_num=1,
                 store_mode=plan.store_mode,
-                stride=32,
-                base_addr_pooling=layer.h_in * 2,
+                stride=0 if is_last_dconv else plan.tile_h,
+                base_addr_pooling=0 if is_last_dconv else plan.tile_h * 2,
                 base_addrs_res=st.storer_bas_addr,
                 is_bicubic_add=0,
                 is_first_or_last_row=0,
@@ -376,13 +403,14 @@ class InstructionEmitter:
                 dest_buffer_idx=dest_buf,
             )
             st.acc_reg_idx = 1 - st.acc_reg_idx
-            st.storer_bas_addr += 4
+            st.storer_bas_addr += plan.storer_step
             st.dataloader_bas_addr += 2 if cal_idx < padding_num else 4
 
         st.weight_bas_addr[0] += plan.weight_transnum_base * plan.ky_outer * plan.ic_inner
         # After all H-tiles write the output feature map, swap ping-pong state
         # so the next layer reads from dest_buf.
         st.feature_buf = dest_buf
+        st.quant_config_idx = 1 - st.quant_config_idx
 
     def _emit_preamble(self) -> None:
         """5-instruction DDR preload preamble emitted once per model (is_first=True).
@@ -416,6 +444,9 @@ def emit_program(
     image_transnum: int = 576,
     inter_layer_transnum: Optional[int] = None,
     inter_layer_bas_addr: int = 576,
+    load_next_transnum: int = 64,
+    load_next_load_model: int = 1,
+    load_next_bas_addr: int = 576,
     emit_offchip_store: bool = False,
     offchip_store_src_buffer: str = "fsrcnn_output_buffer",
     offchip_store_transnum: int = 1024,
@@ -483,10 +514,10 @@ def emit_program(
         if i == 0:
             if load_next:
                 isa.OffchipDataLoader.dispatch(
-                    transnum=image_transnum,
-                    load_model=0,
+                    transnum=load_next_transnum,
+                    load_model=load_next_load_model,
                     src_buffer_idx=0,
-                    bas_addr=0,
+                    bas_addr=load_next_bas_addr,
                 )
             if inter_layer_transnum is not None:
                 isa.OffchipDataLoader.dispatch(
