@@ -36,9 +36,11 @@ AI编译器领域已涌现出大量优秀工作。TVM通过Relay IR[16]提供了
 
 **贡献二：OffsetGenerator子图融合Pass**。提出`fuse_offset_generators` Pass，基于连续三层的结构性模式匹配（`pool2d → conv2d(cout=18) → deformable_conv2d`），将可变形卷积的偏移量生成子网络识别并融合为`offset_gen`算子，确保其DataStorer指令以`dest_buffer_idx='offset_reg'`写出，而非误写入普通数据buffer。该Pass使FSRCNN中全部4个OffsetGenerator层的指令生成从语义错误（0条`dest=offset_reg`的DataStorer）转变为完全正确，直接决定了后续OffsetLoader的有效性。
 
-**贡献三：分层中间表示体系与硬件约束建模**。设计了从Relay IR到LayerDesc、再到TilingPlan、最终到伪指令流的四级分层表示体系，将硬件约束（分块参数模板、ping-pong buffer分配、多帧流水调度、QuantLoader连续编号策略）集中建模于各层之间的规范化接口，消除了手写方案中散布各处的硬编码常量。其中归纳出的四种Tiling模板（Template C/D/E/F）覆盖FSRCNN所有12种计算层类型。
+**贡献三：分层中间表示体系与硬件约束建模**。设计了从Relay IR到LayerDesc、再到TilingPlan、最终到伪指令流的四级分层表示体系，将硬件约束（分块参数模板、ping-pong buffer分配、多帧流水调度、QuantLoader连续编号策略）集中建模于各层之间的规范化接口，消除了手写方案中散布各处的硬编码常量。其中归纳出的五种Tiling模板（Template C/D/E/F及offset\_gen专用模板）覆盖FSRCNN全部12种计算层类型；面向SD-UNet引入形状键查表（`_UNET_LAYER_TABLE`，17条形状条目）配合idx二级消歧（`_UNET_IDX_OVERRIDE_TABLE`），以及`oc_inner`外层循环机制，支持编解码器对称网络的分块参数精确配置。
 
-**贡献四：指令级精确验证**。在FSRCNN超分辨率网络（输入$(1, 1, 32, 64)$）上完成了与手写代码生成器的指令级对比验证：在独立推理模式（`load_next=False`）下生成1,273条伪指令，与黄金参考（`sd_sr_codegen.py`）的`sr_inst()`函数输出在指令类型数量上完全一致（QL/DL/WL/DS/OL/ODS六类全部零差值）；流水线模式（`load_next=True`）下对应1,274条，同样完全匹配。编译器以约800行通用框架代码实现了与3,800行硬编码脚本等价的指令正确性，并具备面向任意ONNX/PyTorch模型的扩展能力。
+**贡献四：分组卷积与上采样算子的完整支持**。针对SD-UNet的分组卷积（Grouped Convolution），提出双级循环发射框架，支持groups=2（conv6，单级group循环）和groups=8（conv7/conv8单级外循环、conv10真双级嵌套）四种模式，QuantLoader发射时机由`group_ql_in_level2`标志统一控制。实现DepthToSpace透明化注入，在前驱Conv层DataStorer中注入`is_pixelshuffle`及相关字段，将像素重排上采样映射到硬件专用DataStorer字段，不增减指令条数。实现pool-while-store完整建模，pool2d层在IR中占位保留形状信息，Emitter层透明跳过，前驱Conv DataStorer中注入`is_pooling=1`字段，三者构成覆盖硬件池化语义的完整机制。
+
+**贡献五：两个目标网络的端到端指令级精确验证**。在FSRCNN超分辨率网络（输入$(1, 1, 36, 64)$，12层）上实现与`sr_inst()`黄金参考的指令数完全匹配（`load_next=False`：1,273条；`load_next=True`：1,274条，QL/DL/WL/DS/OL/ODS六类全部零差值，功能性diff=0）。在SD-UNet（USR\_Net\_109\_nopad.onnx，输入$(1,1,144,256)$，19层Conv，含groups=2/8、DepthToSpace×5、Concat×4）上实现与`sd_inst()`黄金参考的指令数精确匹配（17,155/17,155，功能性diff=0）；剩余14,664个字段差异经逐层multiset分析全部确认为非功能性（WL `is_new`顺序调度差异及QL寄存器编号差异）。编译器以约800行通用框架代码实现了两个网络的完整指令生成，具备面向任意ONNX/PyTorch模型的扩展能力。
 
 ## 1.4　论文组织结构
 
@@ -52,6 +54,6 @@ AI编译器领域已涌现出大量优秀工作。TVM通过Relay IR[16]提供了
 
 **第五章**阐述优化Pass的设计与性能收益，重点介绍OffsetGenerator子图融合Pass（含融合识别规则、专用TilingPlan参数和指令发射模板），以及Post-Pass的依赖分析、虚拟寄存器分配算法和多帧流水调度指令序列设计。
 
-**第六章**报告实验与评估结果，在FSRCNN模型上进行指令级精确匹配验证，定量分析各优化Pass的贡献，并与手写代码生成器进行代码规模、可维护性和通用性的系统对比。
+**第六章**报告实验与评估结果，在FSRCNN和SD-UNet两个目标网络上进行指令级精确匹配验证，定量分析各优化Pass的贡献，并重点分析SD-UNet 14,664个字段差异的非功能性证明（逐层multiset分析方法），以及与手写代码生成器在代码规模、可维护性和通用性上的系统对比。
 
-**第七章**总结本文的工作成果，讨论当前实现的局限性，并展望未来工作方向。
+**第七章**总结本文在两个目标网络上的完整验证成果，从IR设计、分块调度、硬件接口正确性三个层面系统归纳技术贡献，讨论顺序调度限制、`quant_mode`依赖等当前局限性，并展望交错调度优化、量化标定集成、精确地址推导和MLIR演进等未来工作方向。

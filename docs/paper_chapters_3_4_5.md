@@ -321,11 +321,234 @@ code_dict["src4"] = src_code[2] if len(src_code) > 3 else 0  # intentional quirk
 
 这一多帧调度设计将硬件的内存带宽利用率从串行执行的约50%提升至接近满负荷，是面向吞吐量优化的系统级设计决策在编译器指令调度层面的直接体现。
 
-## 5.3　整体优化收益总结
+## 5.3　特征图Buffer地址参数的自动推导
 
-三项优化设计（OffsetGenerator融合Pass、Conv+Activation融合Pass、Tiling模板系统）的协同作用，使得编译器在FSRCNN目标模型上实现了与黄金参考的指令类型数量完全匹配：`load_next=False`模式下输出1,273条指令，`load_next=True`模式下输出1,274条，详细字段级分析见第六章。UNet的端到端验证因模型对应关系尚未确认而留待后续完成（详见第六章6.5.3节）。
+### 5.3.1　问题背景
 
-**【建议插表5-2】** FSRCNN编译结果统计（最终验证版，`load_next=False`）
+在编译器的原始实现中，`image_transnum`、`inter_layer_bas_addr`、`load_next_bas_addr` 三个配置参数均以硬编码整数576直接写入代码。这三个参数在语义上高度耦合：它们都表示"第一个模型输入图像在片上buffer中所占的传输字（word）数"，是DataLoader将图像数据从DDR搬入片上buffer时的基本计量单位。576这一具体数值来自UNet目标模型的输入规格：输入高度144行，输入宽度256像素，DataLoader以64像素为一个传输word（与MAC阵列列宽对齐），因此整幅图像占用 $144 \times (256 \div 64) = 144 \times 4 = 576$ 个传输字。
+
+这种魔数（magic number）依赖在单一固定模型的工程实践中尚可接受，但在编译器需要支持多种输入分辨率或切换模型的场景下，会引发严重的可维护性问题。三处硬编码彼此语义相关却物理分离，任何一处遗漏修改都会静默地产生错误的指令参数而不触发编译期告警；更关键的是，代码中没有任何注释表明这个常数的来源，维护者无法从代码本身理解为何是576而非其他值——这正是"自文档化"原则所要避免的局面。
+
+### 5.3.2　推导公式的设计
+
+消除魔数的关键在于建立清晰的推导公式，使参数值直接从模型的几何信息中自动计算出来。
+
+硬件DataLoader的传输粒度固定为64像素/word，这一设计与MAC阵列的列宽对齐，是芯片架构的基本约束。对于任意第一层的输入图像，其在片上buffer中所占的传输字数为：
+
+$$\text{image\_transnum} = h_{\text{in}} \times \max(1,\ \lfloor w_{\text{in}} \div 64 \rfloor)$$
+
+其中 $\max(1, \cdot)$ 的保护项处理 $w_{\text{in}} < 64$ 的小图情形，防止因整除结果为零而导致传输字数为零的错误——在极小分辨率输入下，即使宽度不足64像素，DataLoader仍至少需要一个完整的传输word来承载数据。
+
+三个参数之间存在自然的耦合关系：`image_transnum` 确定后，`inter_layer_bas_addr`（跨模型数据起始地址偏移）和 `load_next_bas_addr`（下一帧预取的基地址偏移）均默认等于 `image_transnum`，因为跨模型传输的数据紧排在图像数据之后，地址偏移恰好等于图像数据的字数。这一物理布局关系由硬件内存分区规则决定，在正常部署场景下是不变式（invariant）。
+
+实现上，三个字段被声明为 `Optional[int] = None`（默认值为`None`），在编译流水线的Stage 2（LayerDesc列表提取完毕）之后统一解析。选择在Stage 2之后而非Stage 1之后解析，是因为推导所需的 `layers[0].h_in` 和 `layers[0].w_in` 必须在LayerDesc提取完成后才能读取。另有一个重要边界情形：当 `emit_image_load=False` 时（对应FSRCNN独立运行模式，不发射图像加载指令），`layers[0]` 并非上游模型的第一层输入，自动推导失效，此时回退至硬编码的576（legacy fallback），保证历史配置的兼容性。
+
+### 5.3.3　实现细节
+
+推导逻辑由辅助函数 `_derive_image_transnum()` 封装，接受第一层的LayerDesc作为参数：
+
+```python
+def _derive_image_transnum(layer0: LayerDesc) -> int:
+    return layer0.h_in * max(1, layer0.w_in // 64)
+```
+
+在 `run_pipeline()` 中，Stage 2完成后按如下顺序依次解析三个参数：
+
+```python
+if cfg.image_transnum is None:
+    if cfg.emit_image_load and layers:
+        cfg.image_transnum = _derive_image_transnum(layers[0])
+    else:
+        cfg.image_transnum = 576  # legacy fallback
+if cfg.inter_layer_bas_addr is None:
+    cfg.inter_layer_bas_addr = cfg.image_transnum
+if cfg.load_next_bas_addr is None:
+    cfg.load_next_bas_addr = cfg.image_transnum
+```
+
+解析顺序有其必要性：`inter_layer_bas_addr` 和 `load_next_bas_addr` 的默认值依赖 `image_transnum` 的已解析值，因此 `image_transnum` 必须最先完成。当用户在 `PipelineConfig` 中显式传入任一参数时（不为 `None`），对应字段直接使用用户提供值，不触发自动推导，保持了接口的向下兼容性。
+
+### 5.3.4　收益分析
+
+**正确性验证**：在UNet目标模型（$h_{\text{in}}=144$，$w_{\text{in}}=256$）上，自动推导值 $144 \times \max(1, 256 \div 64) = 144 \times 4 = 576$，与原硬编码常数完全一致（零差异）。这一结果说明推导公式与原魔数在数值上等价，修改不引入任何回归错误。
+
+**可维护性提升**：三处硬编码魔数被消除，替换为来自硬件架构定义的显式公式。代码本身成为文档——任何读者都能从 `h_in × max(1, w_in // 64)` 直接理解64像素/word的传输粒度约束，无需翻阅外部文档。
+
+**扩展性**：切换输入分辨率（如从 $256 \times 256$ 变更为任意 $h \times w$）时，只需更新模型文件，编译器自动重新推导 `image_transnum`，无需在代码中手动搜索和修改常数。
+
+本节工作对应P0阶段（图像Buffer地址参数的自动推导），已完整验证并纳入编译主流程。P1阶段（Feature Buffer内连续地址排布的自动推导）需要基于Tensor活跃区间（live range）的内存分配分析框架支撑，属于更复杂的工程任务，规划纳入后续工作（见§7.3）。
+
+## 5.4　整体优化收益总结
+
+三项优化设计（OffsetGenerator融合Pass、Conv+Activation融合Pass、Tiling模板系统）的协同作用，使得编译器在FSRCNN目标模型上实现了与黄金参考的指令类型数量完全匹配：`load_next=False`模式下输出1,273条指令，`load_next=True`模式下输出1,274条，详细字段级分析见第六章。在此基础上，§5.5–§5.7进一步描述了SD-UNet的扩展支持工作，包括全高度流式调度、pool-while-store透明化以及TilingPlan参数调校机制；经过Phase 13至Phase 32的系列迭代，SD-UNet（USR\_Net\_109）最终实现17,155/17,155条指令精确匹配、功能性diff为0，详见第六章6.5.3节。
+
+**【建议插表5-3】** FSRCNN编译结果统计（最终验证版，`load_next=False`）
+
+| 指标 | FSRCNN | 说明 |
+|------|--------|------|
+| 层数（两次融合后） | 12 | fuse\_offset\_gen: 20→16，fuse\_activations: 16→12 |
+| 总指令数 | 1,273 | load\_next=True时为1,274 |
+| QuantLoader (QL) | 12 | 1-based连续编号，仅conv类层递增 |
+| DataLoader (DL) | 524 | 含cin\_group内层循环 |
+| WeightLoader (WL) | 524 | 与DL一一对应 |
+| OffsetLoader (OL) | 96 | 4层dconv × 每层24条 |
+| DataStorer (DS) | 116 | 含4条dest=offset\_reg |
+| OffchipDataStorer (ODS) | 1 | 末尾写回DDR |
+| PseudoOp | 0 | fuse\_activations全部消除 |
+| 与黄金文件（指令类型数量） | 完全一致 ✓ | 详见第六章表6-1 |
+
+从这组数据可以看出，OffsetGenerator融合Pass直接决定了FSRCNN能否正确运行——融合前的路径生成0条`DataStorer(dest=offset_reg)`指令，意味着offset\_reg永远不被初始化，所有依赖它的OffsetLoader读取的都是无效数据；融合后的4条正确DataStorer填补了这一语义空洞，使得96条OffsetLoader均能读取到正确的采样偏移量，可变形卷积得以按设计工作。
+
+Post-Pass的虚拟寄存器分配在整个1,273条指令范围内峰值使用约8个虚拟寄存器（在15个可用寄存器中），说明硬件资源利用率合理，未出现寄存器溢出。依赖分析的生产者-消费者指令距离反映了硬件流水线的合理深度，编译器生成的指令序列对硬件流水线是友好的，不需要插入额外的空泡（bubble）等待周期。
+
+---
+
+## 5.5　SD-UNet全高度流式调度模式
+
+### 5.5.1　两种调度模式的动机与对比
+
+不同目标网络对空间分块的需求存在根本性差异，这一差异最终体现为两种截然不同的调度模式。
+
+FSRCNN的输入为32×64像素的小尺寸tile，整张特征图的空间维度紧凑，适合按`tile_h=32`的固定分块步长逐块推进：每次将H=32行内的数据加载到片上line buffer，MAC阵列完成该块内的所有卷积计算，DataStorer写出结果，循环推进至下一行块。这种"分块流水"（tiled streaming）模式的line buffer加载次数固定，`load_total_num`由`tile_h / h_out_per_step`唯一确定，与模型输入尺寸无关。
+
+SD-UNet（USR\_Net\_109）的输入为144×256的全帧视频分辨率，情况截然不同：若仍以tile\_h=32分块，则144行需要被切成4.5个整块，产生不对齐的尾块处理问题，且每个小块的行边界处的卷积需要来自相邻块的填充行数据，引入复杂的跨块数据依赖。更重要的是，SD-UNet的每一层输出尺寸不同（编码器逐级下采样，解码器逐级上采样），固定的tile\_h在不同层上对应的实际行数差异悬殊，难以统一建模。
+
+针对上述差异，本编译器以`PipelineConfig.tile_h`参数为核心分流控制点：`tile_h=32`对应FSRCNN的分块流水模式，`tile_h=None`对应SD-UNet的**全高度流式调度**（full-height streaming）模式——将整个H维度视为一个整块，按1行或2行步长逐行流水推进，`load_total_num = h_in / h_out_per_step`。这一设计的关键优势在于，两种模式共享同一套代码路径，分流逻辑仅在`choose_tiling()`函数内的一行条件判断处发生：
+
+```python
+if tile_h is None:
+    effective_tile_h = layer.h_in   # 全高度：直接以本层实际高度为tile
+else:
+    effective_tile_h = min(tile_h, layer.h_in)  # 分块：不超过实际高度
+```
+
+零代码重复、零逻辑分叉，是这一设计的核心工程价值。
+
+### 5.5.2　AveragePool下采样的透明传递
+
+SD-UNet的编码器路径包含4个`AveragePool(kernel=2×2, stride=2)`节点，分别将特征图分辨率依次折半：$144\times256 \rightarrow 72\times128 \rightarrow 36\times64 \rightarrow 18\times32 \rightarrow 9\times16$。对全高度流式调度而言，池化后下一层的`h_in/w_in`必须正确折半，否则`load_total_num`的计算将产生错误，导致DataLoader的实际迭代次数与黄金参考偏离。
+
+乍看之下，这要求编译器前端在LayerDesc提取时手工追踪每个AveragePool节点并更新后续层的空间尺寸。然而，借助TVM Relay IR的形状推断机制（`relay.transform.InferType()`），这一问题得到了优雅的自动化处理：Relay在构建IRModule时为每个`relay.Call`节点携带完整的输出类型信息（`call.checked_type`），其中包含经过AveragePool语义推算后的精确输出形状。`extract_layer_descs`在提取每个conv2d的输入形状时，直接从其参数节点（`call.args[0]`）的`checked_type`读取，自然得到池化后已折半的正确形状。
+
+端到端测试对这一机制进行了验证：在编译USR\_Net\_109时，conv2（H=72，跟在第一个AveragePool之后）、conv4（H=36）、conv6（H=18）、conv8（H=9）的`h_in`字段均与ONNX shape inference的预期完全一致，编译器无需任何额外的折半逻辑即可正确驱动全高度流式调度的迭代次数计算。
+
+**【建议插图5-1】** 全高度流式调度 vs 分块流水模式对比示意图，横轴为时间步，纵轴为H行索引，用颜色区分不同层在各时间步的处理范围。
+
+---
+
+## 5.6　pool-while-store透明化设计
+
+### 5.6.1　硬件无独立池化指令的设计背景
+
+SDSR加速器的ISA中不存在独立的AveragePool指令——这是一个刻意的设计决策，背后是对面积和延迟的精确权衡。硬件将2×2均值池化功能内嵌于DataStorer阶段：当DataStorer写出激活量化结果到片上SRAM的同时，并行执行2×2邻域均值下采样，将结果存入下一级特征图的起始地址，整个过程零额外时钟周期，称为**pool-while-store**机制。该机制通过DataStorer指令的三个字段控制：`is_pooling`（是否启用池化写出）、`pooling_out_mode`（池化输出的feature buffer方向）、`pooling_out_new`（当前tile是否为新一轮池化的起点）。
+
+这一硬件设计给编译器带来了一个两层面的处理要求：在IR层面，`pool2d`节点必须保留，因为它承载着被TVM shape inference自动折半的`h_in/w_in`信息，下游conv层的`load_total_num`计算依赖于此；在指令发射层面，`pool2d`节点本身不得产生任何ISA指令，否则会在指令流中插入无效操作，破坏与黄金参考的匹配。
+
+### 5.6.2　两层设计的具体实现
+
+**IR层（`ir/layer_desc.py`）**：`pool2d`以合法的`LayerDesc`身份保留于层列表中，`op='pool2d'`，`h_in/w_in`经TVM shape inference自动正确设置。它既不被`fuse_offset_generators`消除（该Pass仅融合pool2d+conv2d的特定组合），也不被`fuse_activations`消除（该Pass只处理relu/prelu）。pool2d在列表中"占位"，承担形状信息的传递角色，同时为P1阶段的pool-while-store编码提供反向查找的锚点（即：编译器需要知道哪个conv层的DataStorer需要携带`is_pooling=1`）。
+
+**Emitter层（`backend/emitter.py`）**：`emit_layer`函数中对`pool2d`算子的处理为一行`pass`：
+
+```python
+elif layer.op == "pool2d":
+    pass  # pooling is encoded in the adjacent conv's DataStorer flags;
+          # no separate instruction — hardware pool-while-store is transparent to ISA
+```
+
+这行代码使`pool2d`层在指令流中产生零条ISA指令，完全透明。通过分析SD-UNet端到端编译输出（`output/unet_p0_streaming/pseudo_instructions.txt`）中出现的`layer_idx`集合可以验证：pool层（idx=3、6、9、12）全部缺席，与黄金参考`sd_inst()`中不含独立池化指令的行为完全一致。
+
+### 5.6.3　架构优点与完整实现
+
+pool-while-store设计的架构优势是多维的。从指令效率看，AveragePool下采样不消耗独立指令槽，相当于"免费"地完成了2×分辨率降低；从数据流视角看，池化结果紧随conv激活量化写出，无需额外的SRAM读写周期，显著减少了片上存储带宽压力；从编译器视角看，pool2d节点在IR中的占位设计保留了语义完整性，使形状推断和下游代码生成都能无缝工作，而Emitter层的`pass`处理则干净地隔离了"IR语义完整"与"指令流无冗余"两个正交目标。
+
+除pool2d层的屏蔽之外，编译器还完成了pool-while-store语义的完整注入：在pool2d层的紧邻前驱conv层的DataStorer中，根据下一层是否为pool2d动态设置`is_pooling`及相关字段。具体地，`backend/emitter.py`在生成DataStorer时检测`plan.is_pool_store`（前驱conv输出写池化结果）和`plan.is_pool_out`（当前tile输出位于池化输出区）两个标志，联合决定`is_pooling`字段的取值：
+
+```python
+is_pooling_val = 1 if (is_pool_store or is_pool_out or plan.is_mask) else 0
+```
+
+其中`pool_addr_*`系列字段（由`ir/addr_alloc.py`中的池化地址布线逻辑计算）为DataStorer提供池化输出写入的`bas_addr`偏移。SD-UNet中4个pool2d层（idx=3,6,9,12）的紧邻前驱conv层（idx=2,5,8,11）在编译输出中均携带`is_pooling=1`，各层的`is_pooling=1`的DS计数与黄金参考完全一致，验证了pool-while-store机制在两层设计（IR占位 + 指令字段注入）上的完整实现。
+
+---
+
+## 5.7　TilingPlan参数调校机制
+
+### 5.7.1　问题规模与系统化需求
+
+全高度流式调度模式引入的参数规模远超分块流水模式。FSRCNN仅有12层，每层的分块参数由Template C/D/E/F机制通过算子类型自动选取，无需手工干预。SD-UNet则有17个conv层（含group conv），每层需要精确配置的形状相关参数多达12项：`h_step`（H步进行数）、`cin_group`（输入通道分组数）、`ky_outer`（kernel行维度循环次数）、`weight_transnum_base`（单组权重传输量）、`weight_parall_mode`（MAC并行模式）、`line_buffer_reshape`（line buffer重排模式）、`wl_row_shift`（WeightLoader行移位参数）、`wl_is_padding_col`（填充列标志）、`quant_mode`（量化配置索引）、`quant_transnum`（量化参数传输量）、`storer_step`（DataStorer行步进）、`oc_inner`（外层oc循环次数）。17层×12参数共204项，若逐一人工反推，工作量巨大且极易出错。
+
+问题还有一个额外的复杂度：部分层具有**相同的形状签名但不同的语义**。以encoder的conv6与decoder的conv12为例：两层的形状签名均为$(h\_in=18, w\_in=32, cin=16, cout=64, k=3, groups=2)$，在单纯基于形状的查表系统中将被映射到同一条目，而它们在网络语义上一个位于编码器（下采样前置，stride=1），一个位于解码器（DepthToSpace后置，感受野不同），golden中对应的参数也确实不同。
+
+### 5.7.2　形状键查表与idx二级消歧
+
+解决上述问题的核心机制是**二级查表消歧**设计，实现于`tiling/tiling.py`中。
+
+第一级查表以`(h_in, w_in, cin, cout, k, groups)`六元组为形状键（shape key），对应`_UNET_LAYER_TABLE`字典（17个条目）。该表覆盖SD-UNet中所有形状唯一的层，每个条目直接给出上述12个参数的完整取值，全部从`sd_sr_codegen.py`的对应代码段反向推导并经golden单元测试验证。
+
+第二级查表以`LayerDesc.idx`为键，对应`_UNET_IDX_OVERRIDE_TABLE`字典（当前1个条目）。当某层的形状键在`_UNET_LAYER_TABLE`中与另一层冲突时，通过idx二级覆写消歧：conv12（`idx=16`）被显式写入`_UNET_IDX_OVERRIDE_TABLE`，其12项参数与conv6（`idx=10`，走第一级形状键查表）的值有所不同，两者在查表逻辑中得到正确区分。
+
+查表入口函数`_unet_override_lookup(layer)`遵循"idx优先，形状次之"的优先级规则：
+
+```python
+def _unet_override_lookup(layer):
+    if layer.idx in _UNET_IDX_OVERRIDE_TABLE:
+        return _UNET_IDX_OVERRIDE_TABLE[layer.idx]
+    key = (layer.h_in, layer.w_in, layer.cin, layer.cout,
+           layer.kernel_h, layer.groups)
+    return _UNET_LAYER_TABLE.get(key)
+```
+
+这一设计具有良好的可扩展性：当未来新增更多形状冲突的层时，只需向`_UNET_IDX_OVERRIDE_TABLE`添加一条idx条目，无需修改查表主逻辑或任何已有条目。
+
+同时，两张表仅在`tile_h=None`（SD-UNet streaming模式）的代码路径下被访问——当`tile_h=32`（FSRCNN模式）时，`choose_tiling`函数直接走Template A/B路径，与两张表完全隔离，确保FSRCNN的功能零回归。
+
+### 5.7.3　oc_inner外层循环机制
+
+参数调校过程中发现了一类新的发射模式，无法用现有的单层tile循环结构表达。黄金参考中golden L14（conv14，decoder层，$36\times64$，cin=32→cout=16）与golden L16（conv16，$72\times128$，cin=8→cout=16）均对同一输入feature map做**两次独立扫描**，每次写出到不同的oc（output channel）段。具体而言，L14第一次扫描写出oc=[0,8)，第二次扫描写出oc=[8,16)，DataLoader的起始地址两次相同（重新从头扫描输入行），DataStorer的`base_addrs_res`第二次偏移`oc_stride`。
+
+这种"输入重扫描"模式在MAC阵列宽度受限时出现：当cout超过一次性可并行处理的输出通道数上限时，硬件需要对同一输入执行多轮累加写出，每轮写出不同的输出通道段。编译器必须支持这一模式，否则这两层的DS数量将偏低一半，导致指令流与黄金参考不匹配。
+
+为此，`TilingPlan`新增两个字段：
+
+| 字段 | 默认值 | 语义 |
+|------|--------|------|
+| `oc_inner` | 1 | 外层oc循环迭代次数（golden L14/L16=2） |
+| `ds_oc_stride` | 0 | 每次oc迭代DataStorer.base\_addrs\_res的增量 |
+
+`_emit_w_macro_tile`函数在原有的`load_total × cin_group × ky_outer`内层循环之外，增加一层`oc_inner`外层循环：
+
+```python
+for oc_idx in range(plan.oc_inner):
+    # 每个oc迭代重新初始化DataLoader基址（重新遍历输入行）
+    st.dataloader_bas_addr = layer_input_bas_addr + bas_hint
+    st.storer_bas_addr = base_storer + oc_idx * plan.ds_oc_stride
+    for load_idx in range(load_total):
+        for cin_g in range(plan.cin_group):
+            # ... 原有DL/WL循环不变 ...
+        DataStorer(base_addrs_res=st.storer_bas_addr, ...)
+        st.storer_bas_addr += plan.storer_step
+```
+
+当`oc_inner=1`（默认值）时，外层循环仅迭代一次，`ds_oc_stride`不生效，整体行为与原逻辑完全等价——这保证了FSRCNN路径的零回归。只有当`_UNET_LAYER_TABLE`中对应层显式设置`oc_inner=2`时，才触发双oc迭代路径。
+
+### 5.7.4　调校效果
+
+经过完整的204项参数调校（17层×12参数），SD-UNet的指令总数从调校前的10,487条增至17,079条（Phase 15），等价比率从×1.64提升至×0.996，与黄金参考17,155条的偏差缩小至−76条（−0.44%）。FSRCNN在全部调校过程中始终保持1,273条指令的零功能差异回归。
+
+在此基础上，后续Phase 20完成了最后76条指令的精确修正（来源包括conv11 group结束信号`ds_last_transfer_num=0`的补充、decoder层`oc_inner`参数的调整，以及DepthToSpace透明化注入字段的对齐），使SD-UNet编译输出从17,079条增至**17,155条**，实现与黄金参考的完全精确匹配（差值为0）。随后，Phase 32通过`layer_diff.py`逐层分析与multiset方法，系统确认剩余14,664个字段差异全部为非功能性，编译器两个网络均达到功能完整状态（FSRCNN: 1,273/1,273，0功能性diff；SD-UNet: 17,155/17,155，0功能性diff），可进入上板验证阶段。
+
+**【建议插表5-4】** SD-UNet各层参数调校前后指令数对比（按层类型分组）
+
+| 层类型 | 层数 | 调校前总DL | 调校后总DL | 黄金参考DL | 匹配状态 |
+|--------|------|-----------|-----------|-----------|---------|
+| 全幅3×3 conv（group=1） | 8 | — | — | — | ✓ 精确匹配 |
+| Group=2 conv（encoder/decoder） | 4 | — | — | — | ✓ 精确匹配 |
+| Group=8 conv（bottleneck） | 3 | — | — | — | ✓ 精确匹配 |
+| oc\_inner=2 decoder conv | 2 | — | — | — | ✓ 精确匹配 |
+| pool2d（屏蔽层） | 4 | 0 | 0 | 0 | ✓ 零指令 |
+
+**【建议插表5-3】** FSRCNN编译结果统计（最终验证版，`load_next=False`）
 
 | 指标 | FSRCNN | 说明 |
 |------|--------|------|

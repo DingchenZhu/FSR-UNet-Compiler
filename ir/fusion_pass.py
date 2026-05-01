@@ -21,7 +21,7 @@ Position in pipeline:  after extract_layer_descs(), before plan_all().
 """
 from __future__ import annotations
 
-from typing import List
+from typing import Dict, List
 
 from ir.layer_desc import LayerDesc
 
@@ -30,6 +30,23 @@ from ir.layer_desc import LayerDesc
 # We no longer hardcode 18 — the expected cout is derived from the following
 # deformable_conv2d's kernel size so other kernels fuse correctly.
 _OFFSET_GEN_COUT_3x3 = 18   # kept only for documentation / legacy reference
+
+
+def _remap_skip_sources(fused: List[LayerDesc], old_to_new: Dict[int, int]) -> None:
+    """Rewrite skip_sources on fused layers from old (pre-fusion) → new indices.
+
+    skip_sources are populated by extract_layer_descs against the un-fused index
+    space. Fusion passes drop layers (e.g. relu folded into preceding conv), so
+    we must remap each retained source idx through old_to_new. Old indices that
+    were dropped (no entry in the mapping) are silently filtered out — those
+    sources cannot be referenced after fusion anyway.
+    """
+    for layer in fused:
+        if not layer.skip_sources:
+            continue
+        layer.skip_sources = [
+            old_to_new[s] for s in layer.skip_sources if s in old_to_new
+        ]
 
 
 def fuse_offset_generators(layers: List[LayerDesc]) -> List[LayerDesc]:
@@ -52,6 +69,10 @@ def fuse_offset_generators(layers: List[LayerDesc]) -> List[LayerDesc]:
     """
     n = len(layers)
     fused: List[LayerDesc] = []
+    # Maps each kept-layer's pre-fusion idx → its new (post-fusion) idx.
+    # Used to remap skip_sources, which were populated against the pre-fusion
+    # index space by extract_layer_descs.
+    old_to_new: Dict[int, int] = {}
     i = 0
     while i < n:
         L = layers[i]
@@ -64,7 +85,12 @@ def fuse_offset_generators(layers: List[LayerDesc]) -> List[LayerDesc]:
                 == 2 * layers[i + 2].k_h * layers[i + 2].k_w
         ):
             conv = layers[i + 1]
-            fused.append(LayerDesc(
+            # Both the pool2d (L) and the conv2d collapse into the new
+            # offset_gen layer — map both old indices to the new position.
+            new_pos = len(fused)
+            old_to_new[L.idx] = new_pos
+            old_to_new[conv.idx] = new_pos
+            new_layer = LayerDesc(
                 op="offset_gen",
                 idx=L.idx,
                 h_in=conv.h_in,
@@ -79,8 +105,13 @@ def fuse_offset_generators(layers: List[LayerDesc]) -> List[LayerDesc]:
                 pad_left=conv.pad_left,
                 pad_bottom=conv.pad_bottom,
                 pad_right=conv.pad_right,
+                # The fused layer represents both the pool2d and the conv2d's
+                # output tensor — preserve the conv's skip_sources (the conv
+                # is the actual feature producer; the pool was internal).
+                skip_sources=list(conv.skip_sources),
                 extra={"pool_stride": L.k_h},
-            ))
+            )
+            fused.append(new_layer)
             i += 2  # consume pool2d (i) and conv2d (i+1); deformable_conv2d processed next
         else:
             # Detect "looks like an offset generator but no deformable follows":
@@ -100,9 +131,11 @@ def fuse_offset_generators(layers: List[LayerDesc]) -> List[LayerDesc]:
                     f"(cout={layers[i + 1].cout}) at layer idx={L.idx} but no "
                     f"deformable_conv2d follows — skipping fusion"
                 )
+            old_to_new[L.idx] = len(fused)
             fused.append(L)
             i += 1
 
+    _remap_skip_sources(fused, old_to_new)
     for new_idx, layer in enumerate(fused):
         layer.idx = new_idx
 
@@ -116,6 +149,7 @@ def fuse_activations(layers: List[LayerDesc]) -> List[LayerDesc]:
     standalone activation LayerDesc.  Indices are renumbered after fusion.
     """
     fused: List[LayerDesc] = []
+    old_to_new: Dict[int, int] = {}
     i = 0
     while i < len(layers):
         L = layers[i]
@@ -124,13 +158,21 @@ def fuse_activations(layers: List[LayerDesc]) -> List[LayerDesc]:
             and L.op in ("conv2d", "offset_gen", "deformable_conv2d")
             and layers[i + 1].op in ("relu", "prelu")
         ):
+            # The activation collapses into the preceding conv layer; both
+            # old indices map to the same new position so any skip_source
+            # pointing at either resolves correctly post-fusion.
+            new_pos = len(fused)
+            old_to_new[L.idx] = new_pos
+            old_to_new[layers[i + 1].idx] = new_pos
             L.activation = layers[i + 1].op
             fused.append(L)
             i += 2
         else:
+            old_to_new[L.idx] = len(fused)
             fused.append(L)
             i += 1
 
+    _remap_skip_sources(fused, old_to_new)
     for new_idx, layer in enumerate(fused):
         layer.idx = new_idx
 

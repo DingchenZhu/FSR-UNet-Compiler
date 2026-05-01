@@ -64,6 +64,7 @@ class LayerDesc:
     pool_type: Optional[str] = None
     pool_size: Tuple[int, int] = (1, 1)
     activation: Optional[str] = None   # "relu" / "prelu" — set by fuse_activations()
+    skip_sources: List[int] = field(default_factory=list)  # LayerDesc.idx of concat inputs (populated by extract_layer_descs when a concat is detected in the Relay data path)
     extra: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -248,7 +249,66 @@ _KNOWN_HARMLESS_OPS = frozenset({
     "nn.tanh",
     "image.resize2d",
     "nn.upsampling",
+    # Pixel-shuffle / sub-pixel upscaling: pure layout op, must be transparent
+    # for skip-connection tracing in SD-UNet decoder (5 DepthToSpace nodes).
+    "nn.depth_to_space",
+    "nn.space_to_depth",
+    "sigmoid",
 })
+
+
+# Ops that are stripped through (transparent) when tracing data lineage for
+# skip-connection detection.  All single-input harmless ops are transparent;
+# 'concatenate' and 'split' are excluded so we stop there.
+_STRIP_THROUGH_OPS: frozenset = (
+    _KNOWN_HARMLESS_OPS
+    | frozenset({"nn.relu", "nn.prelu", "nn.leaky_relu", "nn.sigmoid", "nn.tanh"})
+) - frozenset({"concatenate", "split"})
+
+
+def _strip_to_data_call(expr: relay.Expr) -> relay.Expr:
+    """Follow through transparent single-input ops to the underlying expr.
+
+    Stops at: concatenate, split, conv2d, pool2d, Var, Constant, etc.
+    Used to detect skip-connection concat nodes in the data path.
+    """
+    while True:
+        if isinstance(expr, relay.TupleGetItem):
+            expr = expr.tuple_value
+            continue
+        if isinstance(expr, relay.Call):
+            name = _call_op_name(expr)
+            if name in _STRIP_THROUGH_OPS and len(expr.args) >= 1:
+                expr = expr.args[0]
+                continue
+        break
+    return expr
+
+
+def _get_skip_sources(
+    data_arg: relay.Expr,
+    call_to_idx: dict,
+) -> List[int]:
+    """Return LayerDesc indices of tensors concatenated into data_arg.
+
+    Returns [] for the common sequential case (no concat in the data path).
+    Returns [idx_a, idx_b, ...] when data_arg traces to concatenate(a, b, ...).
+    """
+    underlying = _strip_to_data_call(data_arg)
+    if not isinstance(underlying, relay.Call):
+        return []
+    if _call_op_name(underlying) != "concatenate":
+        return []
+    # Relay concatenate: args[0] is a Tuple of inputs
+    tup = underlying.args[0]
+    if not isinstance(tup, relay.Tuple):
+        return []
+    sources: List[int] = []
+    for field in tup.fields:
+        src = _strip_to_data_call(field)
+        if isinstance(src, relay.Call) and src in call_to_idx:
+            sources.append(call_to_idx[src])
+    return sources
 
 
 def extract_layer_descs(mod: tvm.ir.IRModule) -> List[LayerDesc]:
@@ -261,25 +321,41 @@ def extract_layer_descs(mod: tvm.ir.IRModule) -> List[LayerDesc]:
     descs: List[LayerDesc] = []
     idx = 0
     warned_ops: set = set()
+    # Maps significant relay.Call nodes → LayerDesc.idx.  Used by
+    # _get_skip_sources to resolve concat input tensors back to their
+    # producing LayerDesc.
+    call_to_idx: dict = {}
     for call in calls:
         name = _call_op_name(call)
         if name == "nn.conv2d":
-            descs.append(_conv_like_from_call(call, idx, deformable=False))
+            desc = _conv_like_from_call(call, idx, deformable=False)
+            desc.skip_sources = _get_skip_sources(call.args[0], call_to_idx)
+            descs.append(desc)
+            call_to_idx[call] = idx
             idx += 1
         elif name == "nn.deformable_conv2d":
-            descs.append(_conv_like_from_call(call, idx, deformable=True))
+            desc = _conv_like_from_call(call, idx, deformable=True)
+            desc.skip_sources = _get_skip_sources(call.args[0], call_to_idx)
+            descs.append(desc)
+            call_to_idx[call] = idx
             idx += 1
         elif name == "nn.max_pool2d":
-            descs.append(_pool_from_call(call, idx, "max"))
+            desc = _pool_from_call(call, idx, "max")
+            descs.append(desc)
+            call_to_idx[call] = idx
             idx += 1
         elif name == "nn.avg_pool2d":
-            descs.append(_pool_from_call(call, idx, "avg"))
+            desc = _pool_from_call(call, idx, "avg")
+            descs.append(desc)
+            call_to_idx[call] = idx
             idx += 1
         elif name in ("nn.relu", "nn.prelu"):
             data = call.args[0]
             dshape = _tensor_shape(data)
             _, c, h, w = dshape[0], dshape[1], dshape[2], dshape[3]
-            descs.append(LayerDesc(op=name.split(".")[-1], idx=idx, h_in=h, w_in=w, cin=c, cout=c))
+            desc = LayerDesc(op=name.split(".")[-1], idx=idx, h_in=h, w_in=w, cin=c, cout=c)
+            descs.append(desc)
+            call_to_idx[call] = idx
             idx += 1
         else:
             # nn.batch_norm, nn.layer_norm, add (residual), etc. are not yet

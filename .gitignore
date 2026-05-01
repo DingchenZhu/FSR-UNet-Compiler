@@ -1,0 +1,14 @@
+# Intermediate compiler outputs
+output/
+
+# Python virtual environment
+.venv_pptx/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Editor / OS
+.DS_Store
+*.swp

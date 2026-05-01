@@ -28,6 +28,7 @@ class OffchipDataLoader:
             "op_code": "OffchipDataLoader",
             "transnum": transnum,
             "load_model": load_model,
+            "is_compression": 0,
             "src_buffer_idx": src_buffer_idx,
             "bas_addr": bas_addr,
         }
@@ -55,6 +56,8 @@ class DataLoader:
             "line_buffer_reshape": line_buffer_reshape,
             "is_padding_row": is_padding_row,
             "read_mode": read_mode,
+            "offchip_read_mode": 0,
+            "is_compression": 0,
             "transnum": transnum,
             "line_buffer_idx": line_buffer_idx,
             "src_buffer_idx": src_buffer_idx,
@@ -90,6 +93,7 @@ class WeightLoader:
             "is_padding_col": is_padding_col,
             "weight_parall_mode": weight_parall_mode,
             "is_new": is_new,
+            "is_skip": 2,
             "transnum": transnum,
             "is_bilinear_bicubic": is_bilinear_bicubic,
             "offset_reg_idx": offset_reg_idx,
@@ -194,6 +198,7 @@ class OffchipDataStorer:
             "code_num": [Inst.current_code_num],
             "op_code": "OffchipDataStorer",
             "src_buffer": src_buffer,
+            "is_compression": 0,
             "transnum": transnum,
             "base_addr": base_addr,
         }
