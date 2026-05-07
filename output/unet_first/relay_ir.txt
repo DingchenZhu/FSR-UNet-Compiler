@@ -1,0 +1,88 @@
+#[version = "0.0.5"]
+def @main(%data: Tensor[(1, 1, 144, 256), float32]) -> Tensor[(1, 1, 144, 256), float32] {
+  %0 = nn.conv2d(%data, meta[relay.Constant][0] /* ty=Tensor[(4, 1, 3, 3), float32] */, padding=[1, 1, 1, 1], channels=4, kernel_size=[3, 3]) /* ty=Tensor[(1, 4, 144, 256), float32] */;
+  %1 = nn.bias_add(%0, meta[relay.Constant][1] /* ty=Tensor[(4), float32] */) /* ty=Tensor[(1, 4, 144, 256), float32] */;
+  %2 = nn.relu(%1) /* ty=Tensor[(1, 4, 144, 256), float32] */;
+  %3 = nn.conv2d(%2, meta[relay.Constant][2] /* ty=Tensor[(4, 4, 3, 3), float32] */, padding=[1, 1, 1, 1], channels=4, kernel_size=[3, 3]) /* ty=Tensor[(1, 4, 144, 256), float32] */;
+  %4 = nn.bias_add(%3, meta[relay.Constant][3] /* ty=Tensor[(4), float32] */) /* ty=Tensor[(1, 4, 144, 256), float32] */;
+  %5 = nn.relu(%4) /* ty=Tensor[(1, 4, 144, 256), float32] */;
+  %6 = nn.conv2d(%5, meta[relay.Constant][4] /* ty=Tensor[(4, 4, 3, 3), float32] */, padding=[1, 1, 1, 1], channels=4, kernel_size=[3, 3]) /* ty=Tensor[(1, 4, 144, 256), float32] */;
+  %7 = nn.bias_add(%6, meta[relay.Constant][5] /* ty=Tensor[(4), float32] */) /* ty=Tensor[(1, 4, 144, 256), float32] */;
+  %8 = nn.relu(%7) /* ty=Tensor[(1, 4, 144, 256), float32] */;
+  %9 = nn.avg_pool2d(%8, pool_size=[2, 2], strides=[2, 2], padding=[0, 0, 0, 0]) /* ty=Tensor[(1, 4, 72, 128), float32] */;
+  %10 = nn.conv2d(%9, meta[relay.Constant][6] /* ty=Tensor[(8, 4, 3, 3), float32] */, padding=[1, 1, 1, 1], channels=8, kernel_size=[3, 3]) /* ty=Tensor[(1, 8, 72, 128), float32] */;
+  %11 = nn.bias_add(%10, meta[relay.Constant][7] /* ty=Tensor[(8), float32] */) /* ty=Tensor[(1, 8, 72, 128), float32] */;
+  %12 = nn.relu(%11) /* ty=Tensor[(1, 8, 72, 128), float32] */;
+  %13 = nn.conv2d(%12, meta[relay.Constant][8] /* ty=Tensor[(8, 8, 3, 3), float32] */, padding=[1, 1, 1, 1], channels=8, kernel_size=[3, 3]) /* ty=Tensor[(1, 8, 72, 128), float32] */;
+  %14 = nn.bias_add(%13, meta[relay.Constant][9] /* ty=Tensor[(8), float32] */) /* ty=Tensor[(1, 8, 72, 128), float32] */;
+  %15 = nn.relu(%14) /* ty=Tensor[(1, 8, 72, 128), float32] */;
+  %16 = nn.avg_pool2d(%15, pool_size=[2, 2], strides=[2, 2], padding=[0, 0, 0, 0]) /* ty=Tensor[(1, 8, 36, 64), float32] */;
+  %17 = nn.conv2d(%16, meta[relay.Constant][10] /* ty=Tensor[(16, 8, 3, 3), float32] */, padding=[1, 1, 1, 1], channels=16, kernel_size=[3, 3]) /* ty=Tensor[(1, 16, 36, 64), float32] */;
+  %18 = nn.bias_add(%17, meta[relay.Constant][11] /* ty=Tensor[(16), float32] */) /* ty=Tensor[(1, 16, 36, 64), float32] */;
+  %19 = nn.relu(%18) /* ty=Tensor[(1, 16, 36, 64), float32] */;
+  %20 = nn.conv2d(%19, meta[relay.Constant][12] /* ty=Tensor[(16, 16, 3, 3), float32] */, padding=[1, 1, 1, 1], channels=16, kernel_size=[3, 3]) /* ty=Tensor[(1, 16, 36, 64), float32] */;
+  %21 = nn.bias_add(%20, meta[relay.Constant][13] /* ty=Tensor[(16), float32] */) /* ty=Tensor[(1, 16, 36, 64), float32] */;
+  %22 = nn.relu(%21) /* ty=Tensor[(1, 16, 36, 64), float32] */;
+  %23 = nn.avg_pool2d(%22, pool_size=[2, 2], strides=[2, 2], padding=[0, 0, 0, 0]) /* ty=Tensor[(1, 16, 18, 32), float32] */;
+  %24 = nn.conv2d(%23, meta[relay.Constant][14] /* ty=Tensor[(64, 8, 3, 3), float32] */, padding=[1, 1, 1, 1], groups=2, channels=64, kernel_size=[3, 3]) /* ty=Tensor[(1, 64, 18, 32), float32] */;
+  %25 = nn.bias_add(%24, meta[relay.Constant][15] /* ty=Tensor[(64), float32] */) /* ty=Tensor[(1, 64, 18, 32), float32] */;
+  %26 = nn.relu(%25) /* ty=Tensor[(1, 64, 18, 32), float32] */;
+  %27 = nn.conv2d(%26, meta[relay.Constant][16] /* ty=Tensor[(64, 8, 3, 3), float32] */, padding=[1, 1, 1, 1], groups=8, channels=64, kernel_size=[3, 3]) /* ty=Tensor[(1, 64, 18, 32), float32] */;
+  %28 = nn.bias_add(%27, meta[relay.Constant][17] /* ty=Tensor[(64), float32] */) /* ty=Tensor[(1, 64, 18, 32), float32] */;
+  %29 = nn.relu(%28) /* ty=Tensor[(1, 64, 18, 32), float32] */;
+  %30 = nn.avg_pool2d(%29, pool_size=[2, 2], strides=[2, 2], padding=[0, 0, 0, 0]) /* ty=Tensor[(1, 64, 9, 16), float32] */;
+  %31 = nn.conv2d(%30, meta[relay.Constant][18] /* ty=Tensor[(64, 8, 3, 3), float32] */, padding=[1, 1, 1, 1], groups=8, channels=64, kernel_size=[3, 3]) /* ty=Tensor[(1, 64, 9, 16), float32] */;
+  %32 = nn.bias_add(%31, meta[relay.Constant][19] /* ty=Tensor[(64), float32] */) /* ty=Tensor[(1, 64, 9, 16), float32] */;
+  %33 = nn.relu(%32) /* ty=Tensor[(1, 64, 9, 16), float32] */;
+  %34 = nn.conv2d(%33, meta[relay.Constant][20] /* ty=Tensor[(256, 8, 3, 3), float32] */, padding=[1, 1, 1, 1], groups=8, channels=256, kernel_size=[3, 3]) /* ty=Tensor[(1, 256, 9, 16), float32] */;
+  %35 = nn.depth_to_space(%34, block_size=2, mode="CRD") /* ty=Tensor[(1, 64, 18, 32), float32] */;
+  %36 = nn.batch_norm(%35, meta[relay.Constant][21] /* ty=Tensor[(64), float32] */, meta[relay.Constant][22] /* ty=Tensor[(64), float32] */, meta[relay.Constant][23] /* ty=Tensor[(64), float32] */, meta[relay.Constant][24] /* ty=Tensor[(64), float32] */) /* ty=(Tensor[(1, 64, 18, 32), float32], Tensor[(64), float32], Tensor[(64), float32]) */;
+  %37 = %36.0;
+  %38 = nn.relu(%37) /* ty=Tensor[(1, 64, 18, 32), float32] */;
+  %39 = (%38, %29);
+  %40 = concatenate(%39, axis=1) /* ty=Tensor[(1, 128, 18, 32), float32] */;
+  %41 = nn.conv2d(%40, meta[relay.Constant][25] /* ty=Tensor[(16, 64, 3, 3), float32] */, padding=[1, 1, 1, 1], groups=2, channels=16, kernel_size=[3, 3]) /* ty=Tensor[(1, 16, 18, 32), float32] */;
+  %42 = nn.bias_add(%41, meta[relay.Constant][26] /* ty=Tensor[(16), float32] */) /* ty=Tensor[(1, 16, 18, 32), float32] */;
+  %43 = nn.relu(%42) /* ty=Tensor[(1, 16, 18, 32), float32] */;
+  %44 = nn.conv2d(%43, meta[relay.Constant][27] /* ty=Tensor[(64, 8, 3, 3), float32] */, padding=[1, 1, 1, 1], groups=2, channels=64, kernel_size=[3, 3]) /* ty=Tensor[(1, 64, 18, 32), float32] */;
+  %45 = nn.depth_to_space(%44, block_size=2, mode="CRD") /* ty=Tensor[(1, 16, 36, 64), float32] */;
+  %46 = nn.batch_norm(%45, meta[relay.Constant][28] /* ty=Tensor[(16), float32] */, meta[relay.Constant][29] /* ty=Tensor[(16), float32] */, meta[relay.Constant][30] /* ty=Tensor[(16), float32] */, meta[relay.Constant][31] /* ty=Tensor[(16), float32] */) /* ty=(Tensor[(1, 16, 36, 64), float32], Tensor[(16), float32], Tensor[(16), float32]) */;
+  %47 = %46.0;
+  %48 = nn.relu(%47) /* ty=Tensor[(1, 16, 36, 64), float32] */;
+  %49 = (%48, %22);
+  %50 = concatenate(%49, axis=1) /* ty=Tensor[(1, 32, 36, 64), float32] */;
+  %51 = nn.conv2d(%50, meta[relay.Constant][32] /* ty=Tensor[(16, 32, 3, 3), float32] */, padding=[1, 1, 1, 1], channels=16, kernel_size=[3, 3]) /* ty=Tensor[(1, 16, 36, 64), float32] */;
+  %52 = nn.bias_add(%51, meta[relay.Constant][33] /* ty=Tensor[(16), float32] */) /* ty=Tensor[(1, 16, 36, 64), float32] */;
+  %53 = nn.relu(%52) /* ty=Tensor[(1, 16, 36, 64), float32] */;
+  %54 = nn.conv2d(%53, meta[relay.Constant][34] /* ty=Tensor[(32, 16, 3, 3), float32] */, padding=[1, 1, 1, 1], channels=32, kernel_size=[3, 3]) /* ty=Tensor[(1, 32, 36, 64), float32] */;
+  %55 = nn.bias_add(%54, meta[relay.Constant][35] /* ty=Tensor[(32), float32] */) /* ty=Tensor[(1, 32, 36, 64), float32] */;
+  %56 = nn.depth_to_space(%55, block_size=2, mode="CRD") /* ty=Tensor[(1, 8, 72, 128), float32] */;
+  %57 = nn.batch_norm(%56, meta[relay.Constant][36] /* ty=Tensor[(8), float32] */, meta[relay.Constant][37] /* ty=Tensor[(8), float32] */, meta[relay.Constant][38] /* ty=Tensor[(8), float32] */, meta[relay.Constant][39] /* ty=Tensor[(8), float32] */) /* ty=(Tensor[(1, 8, 72, 128), float32], Tensor[(8), float32], Tensor[(8), float32]) */;
+  %58 = %57.0;
+  %59 = nn.relu(%58) /* ty=Tensor[(1, 8, 72, 128), float32] */;
+  %60 = (%59, %15);
+  %61 = concatenate(%60, axis=1) /* ty=Tensor[(1, 16, 72, 128), float32] */;
+  %62 = nn.conv2d(%61, meta[relay.Constant][40] /* ty=Tensor[(8, 16, 3, 3), float32] */, padding=[1, 1, 1, 1], channels=8, kernel_size=[3, 3]) /* ty=Tensor[(1, 8, 72, 128), float32] */;
+  %63 = nn.bias_add(%62, meta[relay.Constant][41] /* ty=Tensor[(8), float32] */) /* ty=Tensor[(1, 8, 72, 128), float32] */;
+  %64 = nn.relu(%63) /* ty=Tensor[(1, 8, 72, 128), float32] */;
+  %65 = nn.conv2d(%64, meta[relay.Constant][42] /* ty=Tensor[(16, 8, 3, 3), float32] */, padding=[1, 1, 1, 1], channels=16, kernel_size=[3, 3]) /* ty=Tensor[(1, 16, 72, 128), float32] */;
+  %66 = nn.bias_add(%65, meta[relay.Constant][43] /* ty=Tensor[(16), float32] */) /* ty=Tensor[(1, 16, 72, 128), float32] */;
+  %67 = nn.depth_to_space(%66, block_size=2, mode="CRD") /* ty=Tensor[(1, 4, 144, 256), float32] */;
+  %68 = nn.batch_norm(%67, meta[relay.Constant][44] /* ty=Tensor[(4), float32] */, meta[relay.Constant][45] /* ty=Tensor[(4), float32] */, meta[relay.Constant][46] /* ty=Tensor[(4), float32] */, meta[relay.Constant][47] /* ty=Tensor[(4), float32] */) /* ty=(Tensor[(1, 4, 144, 256), float32], Tensor[(4), float32], Tensor[(4), float32]) */;
+  %69 = %68.0;
+  %70 = nn.relu(%69) /* ty=Tensor[(1, 4, 144, 256), float32] */;
+  %71 = (%70, %8);
+  %72 = concatenate(%71, axis=1) /* ty=Tensor[(1, 8, 144, 256), float32] */;
+  %73 = nn.conv2d(%72, meta[relay.Constant][48] /* ty=Tensor[(4, 8, 3, 3), float32] */, padding=[1, 1, 1, 1], channels=4, kernel_size=[3, 3]) /* ty=Tensor[(1, 4, 144, 256), float32] */;
+  %74 = nn.bias_add(%73, meta[relay.Constant][49] /* ty=Tensor[(4), float32] */) /* ty=Tensor[(1, 4, 144, 256), float32] */;
+  %75 = nn.relu(%74) /* ty=Tensor[(1, 4, 144, 256), float32] */;
+  %76 = nn.conv2d(%75, meta[relay.Constant][50] /* ty=Tensor[(1, 4, 3, 3), float32] */, padding=[1, 1, 1, 1], channels=1, kernel_size=[3, 3]) /* ty=Tensor[(1, 1, 144, 256), float32] */;
+  %77 = nn.bias_add(%76, meta[relay.Constant][51] /* ty=Tensor[(1), float32] */) /* ty=Tensor[(1, 1, 144, 256), float32] */;
+  %78 = nn.depth_to_space(%77, mode="CRD") /* ty=Tensor[(1, 1, 144, 256), float32] */;
+  sigmoid(%78) /* ty=Tensor[(1, 1, 144, 256), float32] */
+}
+
+/* For debugging purposes the metadata section has been omitted.
+ * If you would like to see the full metadata section you can set the 
+ * option to `True` when invoking `astext`. 
+ */

@@ -1,0 +1,306 @@
+#[version = "0.0.5"]
+type tensor_uint8_t {
+  tensor_nil_uint8,
+  tensor0_uint8(uint8),
+  tensor1_uint8(Tensor[(?), uint8]),
+  tensor2_uint8(Tensor[(?, ?), uint8]),
+  tensor3_uint8(Tensor[(?, ?, ?), uint8]),
+  tensor4_uint8(Tensor[(?, ?, ?, ?), uint8]),
+  tensor5_uint8(Tensor[(?, ?, ?, ?, ?), uint8]),
+  tensor6_uint8(Tensor[(?, ?, ?, ?, ?, ?), uint8]),
+}
+
+type tensor_int16_t {
+  tensor_nil_int16,
+  tensor0_int16(int16),
+  tensor1_int16(Tensor[(?), int16]),
+  tensor2_int16(Tensor[(?, ?), int16]),
+  tensor3_int16(Tensor[(?, ?, ?), int16]),
+  tensor4_int16(Tensor[(?, ?, ?, ?), int16]),
+  tensor5_int16(Tensor[(?, ?, ?, ?, ?), int16]),
+  tensor6_int16(Tensor[(?, ?, ?, ?, ?, ?), int16]),
+}
+
+type Option[A] {
+  Some(A),
+  None,
+}
+
+type List[A] {
+  Cons(A, List[A]),
+  Nil,
+}
+
+type tensor_uint16_t {
+  tensor_nil_uint16,
+  tensor0_uint16(uint16),
+  tensor1_uint16(Tensor[(?), uint16]),
+  tensor2_uint16(Tensor[(?, ?), uint16]),
+  tensor3_uint16(Tensor[(?, ?, ?), uint16]),
+  tensor4_uint16(Tensor[(?, ?, ?, ?), uint16]),
+  tensor5_uint16(Tensor[(?, ?, ?, ?, ?), uint16]),
+  tensor6_uint16(Tensor[(?, ?, ?, ?, ?, ?), uint16]),
+}
+
+type tensor_int8_t {
+  tensor_nil_int8,
+  tensor0_int8(int8),
+  tensor1_int8(Tensor[(?), int8]),
+  tensor2_int8(Tensor[(?, ?), int8]),
+  tensor3_int8(Tensor[(?, ?, ?), int8]),
+  tensor4_int8(Tensor[(?, ?, ?, ?), int8]),
+  tensor5_int8(Tensor[(?, ?, ?, ?, ?), int8]),
+  tensor6_int8(Tensor[(?, ?, ?, ?, ?, ?), int8]),
+}
+
+type tensor_float32_t {
+  tensor_nil_float32,
+  tensor0_float32(float32),
+  tensor1_float32(Tensor[(?), float32]),
+  tensor2_float32(Tensor[(?, ?), float32]),
+  tensor3_float32(Tensor[(?, ?, ?), float32]),
+  tensor4_float32(Tensor[(?, ?, ?, ?), float32]),
+  tensor5_float32(Tensor[(?, ?, ?, ?, ?), float32]),
+  tensor6_float32(Tensor[(?, ?, ?, ?, ?, ?), float32]),
+}
+
+type tensor_float16_t {
+  tensor_nil_float16,
+  tensor0_float16(float16),
+  tensor1_float16(Tensor[(?), float16]),
+  tensor2_float16(Tensor[(?, ?), float16]),
+  tensor3_float16(Tensor[(?, ?, ?), float16]),
+  tensor4_float16(Tensor[(?, ?, ?, ?), float16]),
+  tensor5_float16(Tensor[(?, ?, ?, ?, ?), float16]),
+  tensor6_float16(Tensor[(?, ?, ?, ?, ?, ?), float16]),
+}
+
+type tensor_int64_t {
+  tensor_nil_int64,
+  tensor0_int64(int64),
+  tensor1_int64(Tensor[(?), int64]),
+  tensor2_int64(Tensor[(?, ?), int64]),
+  tensor3_int64(Tensor[(?, ?, ?), int64]),
+  tensor4_int64(Tensor[(?, ?, ?, ?), int64]),
+  tensor5_int64(Tensor[(?, ?, ?, ?, ?), int64]),
+  tensor6_int64(Tensor[(?, ?, ?, ?, ?, ?), int64]),
+}
+
+type tensor_float64_t {
+  tensor_nil_float64,
+  tensor0_float64(float64),
+  tensor1_float64(Tensor[(?), float64]),
+  tensor2_float64(Tensor[(?, ?), float64]),
+  tensor3_float64(Tensor[(?, ?, ?), float64]),
+  tensor4_float64(Tensor[(?, ?, ?, ?), float64]),
+  tensor5_float64(Tensor[(?, ?, ?, ?, ?), float64]),
+  tensor6_float64(Tensor[(?, ?, ?, ?, ?, ?), float64]),
+}
+
+type tensor_int32_t {
+  tensor_nil_int32,
+  tensor0_int32(int32),
+  tensor1_int32(Tensor[(?), int32]),
+  tensor2_int32(Tensor[(?, ?), int32]),
+  tensor3_int32(Tensor[(?, ?, ?), int32]),
+  tensor4_int32(Tensor[(?, ?, ?, ?), int32]),
+  tensor5_int32(Tensor[(?, ?, ?, ?, ?), int32]),
+  tensor6_int32(Tensor[(?, ?, ?, ?, ?, ?), int32]),
+}
+
+type Tree[A] {
+  Rose(A, List[Tree[A]]),
+}
+
+def @main(%input0: Tensor[(1, 1, 36, 64), float32], %first_part_0_weight: Tensor[(32, 1, 3, 3), float32], %first_part_0_bias: Tensor[(32), float32], %first_part_1_weight: Tensor[(32), float32], %mid_part_1_0_weight: Tensor[(8, 32, 1, 1), float32], %mid_part_1_0_bias: Tensor[(8), float32], %mid_part_1_1_weight: Tensor[(8), float32], %mid_part_1_2_off2d_off2d_1_1_weight: Tensor[(18, 8, 3, 3), float32], %mid_part_1_2_off2d_off2d_1_1_bias: Tensor[(18), float32], %mid_part_1_2_dconv_weight: Tensor[(8, 8, 3, 3), float32], %mid_part_1_3_weight: Tensor[(8), float32], %mid_part_1_4_off2d_off2d_1_1_weight: Tensor[(18, 8, 3, 3), float32], %mid_part_1_4_off2d_off2d_1_1_bias: Tensor[(18), float32], %mid_part_1_4_dconv_weight: Tensor[(8, 8, 3, 3), float32], %mid_part_1_5_weight: Tensor[(8), float32], %mid_part_2_0_off2d_off2d_1_1_weight: Tensor[(18, 8, 3, 3), float32], %mid_part_2_0_off2d_off2d_1_1_bias: Tensor[(18), float32], %mid_part_2_0_dconv_weight: Tensor[(8, 8, 3, 3), float32], %mid_part_2_1_weight: Tensor[(8), float32], %mid_part_2_2_off2d_off2d_1_1_weight: Tensor[(18, 8, 3, 3), float32], %mid_part_2_2_off2d_off2d_1_1_bias: Tensor[(18), float32], %mid_part_2_2_dconv_weight: Tensor[(8, 8, 3, 3), float32], %mid_part_2_3_weight: Tensor[(8), float32], %mid_part_2_4_weight: Tensor[(32, 8, 1, 1), float32], %mid_part_2_4_bias: Tensor[(32), float32], %mid_part_2_5_weight: Tensor[(32), float32], %last_part_conv_weight: Tensor[(4, 32, 3, 3), float32], %last_part_conv_bias: Tensor[(4), float32]) -> Tensor[(1, 1, 72, 128), float32] {
+  %0 = nn.conv2d(%input0, %first_part_0_weight, padding=[1, 1, 1, 1], channels=32, kernel_size=[3, 3]) /* C.graph: aten::_convolution, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/torch.nn.modules.conv.Conv2d::0_PART_0 */ /* ty=Tensor[(1, 32, 36, 64), float32] */;
+  %1 = nn.bias_add(%0, %first_part_0_bias) /* C.graph: aten::_convolution, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/torch.nn.modules.conv.Conv2d::0 */ /* ty=Tensor[(1, 32, 36, 64), float32] */;
+  %2 = broadcast_to(%first_part_1_weight, shape=[32], dtype="") /* C.graph: aten::prelu, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/torch.nn.modules.activation.PReLU::1_PART_0 */ /* ty=Tensor[(32), float32] */;
+  %3 = nn.prelu(%1, %2) /* C.graph: aten::prelu, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/torch.nn.modules.activation.PReLU::1 */ /* ty=Tensor[(1, 32, 36, 64), float32] */;
+  %4 = nn.conv2d(%3, %mid_part_1_0_weight, padding=[0, 0, 0, 0], channels=8, kernel_size=[1, 1]) /* C.graph: aten::_convolution, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/torch.nn.modules.conv.Conv2d::0_PART_0 */ /* ty=Tensor[(1, 8, 36, 64), float32] */;
+  %5 = nn.bias_add(%4, %mid_part_1_0_bias) /* C.graph: aten::_convolution, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/torch.nn.modules.conv.Conv2d::0 */ /* ty=Tensor[(1, 8, 36, 64), float32] */;
+  %6 = broadcast_to(%mid_part_1_1_weight, shape=[8], dtype="") /* C.graph: aten::prelu, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/torch.nn.modules.activation.PReLU::1_PART_0 */ /* ty=Tensor[(8), float32] */;
+  %7 = nn.prelu(%5, %6) /* C.graph: aten::prelu, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/torch.nn.modules.activation.PReLU::1 */ /* ty=Tensor[(1, 8, 36, 64), float32] */;
+  %8 = nn.avg_pool2d(%7, pool_size=[4, 4], strides=[4, 4], padding=[0, 0, 0, 0], count_include_pad=True) /* C.graph: aten::avg_pool2d, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d/torch.nn.modules.container.Sequential::off2d_1/torch.nn.modules.pooling.AvgPool2d::0 */ /* ty=Tensor[(1, 8, 9, 16), float32] */;
+  %9 = nn.conv2d(%8, %mid_part_1_2_off2d_off2d_1_1_weight, padding=[1, 1, 1, 1], channels=18, kernel_size=[3, 3]) /* C.graph: aten::_convolution, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d/torch.nn.modules.container.Sequential::off2d_1/torch.nn.modules.conv.Conv2d::1_PART_0 */ /* ty=Tensor[(1, 18, 9, 16), float32] */;
+  %10 = nn.bias_add(%9, %mid_part_1_2_off2d_off2d_1_1_bias) /* C.graph: aten::_convolution, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d/torch.nn.modules.container.Sequential::off2d_1/torch.nn.modules.conv.Conv2d::1 */ /* ty=Tensor[(1, 18, 9, 16), float32] */;
+  %11 = clip(%10, a_min=-1f, a_max=1f) /* C.graph: aten::clamp, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(1, 18, 9, 16), float32] */;
+  %12 = repeat(%11, repeats=4, axis=2) /* C.graph: aten::repeat_interleave, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(1, 18, 36, 16), float32] */;
+  %13 = repeat(%12, repeats=4, axis=3) /* C.graph: aten::repeat_interleave, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(1, 18, 36, 64), float32] */;
+  %14 = cast_like(0 /* ty=int32 */, meta[relay.Constant][0] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_0 */ /* ty=int32 */;
+  %15 = nn.pad(%13, 0 /* ty=int32 */, pad_width=[[0, 0], [0, 0], [0, 0], [0, 0]], pad_mode="edge") /* C.graph: aten::pad, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(1, 18, 36, 64), float32] */;
+  %16 = shape_of(%15, dtype="int32") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_2 */ /* ty=Tensor[(4), int32] */;
+  %17 = cast_like(%16, meta[relay.Constant][0] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_3 */ /* ty=Tensor[(4), int32] */;
+  %18 = slice_like(%17, meta[relay.Constant][0] /* ty=Tensor[(4), int32] */, axes=None) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_4 */ /* ty=Tensor[(4), int32] */;
+  %19 = less(meta[relay.Constant][0] /* ty=Tensor[(4), int32] */, %14) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_1 */ /* ty=Tensor[(4), bool] */;
+  %20 = add(meta[relay.Constant][0] /* ty=Tensor[(4), int32] */, %18) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_5 */ /* ty=Tensor[(4), int32] */;
+  %21 = where(%19, %20, meta[relay.Constant][0] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_6 */ /* ty=Tensor[(4), int32] */;
+  %22 = greater_equal(%21, %18) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_7 */ /* ty=Tensor[(4), bool] */;
+  %23 = shape_of(%15, dtype="int32") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_9 */ /* ty=Tensor[(4), int32] */;
+  %24 = cast(36 /* ty=int32 */, dtype="int64") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_12 */ /* ty=int64 */;
+  %25 = cast(%23, dtype="int64") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_10 */ /* ty=Tensor[(4), int64] */;
+  %26 = expand_dims(2 /* ty=int32 */, axis=0) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_11 */ /* ty=Tensor[(1), int32] */;
+  %27 = expand_dims(%24, axis=0) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_13 */ /* ty=Tensor[(1), int64] */;
+  %28 = where(%22, %18, %21) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_8 */ /* ty=Tensor[(4), int32] */;
+  %29 = scatter(%25, %26, %27) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_14 */ /* ty=Tensor[(4), int64] */;
+  %30 = cast_like(0 /* ty=int32 */, meta[relay.Constant][2] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_0 */ /* ty=int32 */;
+  %31 = dyn.strided_slice(%15, %28, %29, meta[relay.Constant][1] /* ty=Tensor[(4), int32] */, begin=None, end=None, strides=None, axes=None) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(?, ?, ?, ?), float32] */;
+  %32 = shape_of(%31, dtype="int32") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_2 */ /* ty=Tensor[(4), int32] */;
+  %33 = cast_like(%32, meta[relay.Constant][2] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_3 */ /* ty=Tensor[(4), int32] */;
+  %34 = slice_like(%33, meta[relay.Constant][2] /* ty=Tensor[(4), int32] */, axes=None) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_4 */ /* ty=Tensor[(4), int32] */;
+  %35 = less(meta[relay.Constant][2] /* ty=Tensor[(4), int32] */, %30) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_1 */ /* ty=Tensor[(4), bool] */;
+  %36 = add(meta[relay.Constant][2] /* ty=Tensor[(4), int32] */, %34) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_5 */ /* ty=Tensor[(4), int32] */;
+  %37 = where(%35, %36, meta[relay.Constant][2] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_6 */ /* ty=Tensor[(4), int32] */;
+  %38 = greater_equal(%37, %34) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_7 */ /* ty=Tensor[(4), bool] */;
+  %39 = shape_of(%31, dtype="int32") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_9 */ /* ty=Tensor[(4), int32] */;
+  %40 = cast(64 /* ty=int32 */, dtype="int64") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_12 */ /* ty=int64 */;
+  %41 = cast(%39, dtype="int64") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_10 */ /* ty=Tensor[(4), int64] */;
+  %42 = expand_dims(3 /* ty=int32 */, axis=0) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_11 */ /* ty=Tensor[(1), int32] */;
+  %43 = expand_dims(%40, axis=0) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_13 */ /* ty=Tensor[(1), int64] */;
+  %44 = where(%38, %34, %37) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_8 */ /* ty=Tensor[(4), int32] */;
+  %45 = scatter(%41, %42, %43) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_14 */ /* ty=Tensor[(4), int64] */;
+  %46 = dyn.strided_slice(%31, %44, %45, meta[relay.Constant][3] /* ty=Tensor[(4), int32] */, begin=None, end=None, strides=None, axes=None) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(?, ?, ?, ?), float32] */;
+  %47 = nn.deformable_conv2d(%7, %46, %mid_part_1_2_dconv_weight, padding=[1, 1, 1, 1], channels=8, kernel_size=[3, 3]) /* C.graph: torchvision::deform_conv2d, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2 */ /* ty=Tensor[(1, 8, 36, 64), float32] */;
+  %48 = broadcast_to(%mid_part_1_3_weight, shape=[8], dtype="") /* C.graph: aten::prelu, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/torch.nn.modules.activation.PReLU::3_PART_0 */ /* ty=Tensor[(8), float32] */;
+  %49 = nn.prelu(%47, %48) /* C.graph: aten::prelu, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/torch.nn.modules.activation.PReLU::3 */ /* ty=Tensor[(1, 8, 36, 64), float32] */;
+  %50 = nn.avg_pool2d(%49, pool_size=[4, 4], strides=[4, 4], padding=[0, 0, 0, 0], count_include_pad=True) /* C.graph: aten::avg_pool2d, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d/torch.nn.modules.container.Sequential::off2d_1/torch.nn.modules.pooling.AvgPool2d::0 */ /* ty=Tensor[(1, 8, 9, 16), float32] */;
+  %51 = nn.conv2d(%50, %mid_part_1_4_off2d_off2d_1_1_weight, padding=[1, 1, 1, 1], channels=18, kernel_size=[3, 3]) /* C.graph: aten::_convolution, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d/torch.nn.modules.container.Sequential::off2d_1/torch.nn.modules.conv.Conv2d::1_PART_0 */ /* ty=Tensor[(1, 18, 9, 16), float32] */;
+  %52 = nn.bias_add(%51, %mid_part_1_4_off2d_off2d_1_1_bias) /* C.graph: aten::_convolution, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d/torch.nn.modules.container.Sequential::off2d_1/torch.nn.modules.conv.Conv2d::1 */ /* ty=Tensor[(1, 18, 9, 16), float32] */;
+  %53 = clip(%52, a_min=-1f, a_max=1f) /* C.graph: aten::clamp, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(1, 18, 9, 16), float32] */;
+  %54 = repeat(%53, repeats=4, axis=2) /* C.graph: aten::repeat_interleave, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(1, 18, 36, 16), float32] */;
+  %55 = repeat(%54, repeats=4, axis=3) /* C.graph: aten::repeat_interleave, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(1, 18, 36, 64), float32] */;
+  %56 = cast_like(0 /* ty=int32 */, meta[relay.Constant][4] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_0 */ /* ty=int32 */;
+  %57 = nn.pad(%55, 0 /* ty=int32 */, pad_width=[[0, 0], [0, 0], [0, 0], [0, 0]], pad_mode="edge") /* C.graph: aten::pad, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(1, 18, 36, 64), float32] */;
+  %58 = shape_of(%57, dtype="int32") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_2 */ /* ty=Tensor[(4), int32] */;
+  %59 = cast_like(%58, meta[relay.Constant][4] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_3 */ /* ty=Tensor[(4), int32] */;
+  %60 = slice_like(%59, meta[relay.Constant][4] /* ty=Tensor[(4), int32] */, axes=None) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_4 */ /* ty=Tensor[(4), int32] */;
+  %61 = less(meta[relay.Constant][4] /* ty=Tensor[(4), int32] */, %56) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_1 */ /* ty=Tensor[(4), bool] */;
+  %62 = add(meta[relay.Constant][4] /* ty=Tensor[(4), int32] */, %60) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_5 */ /* ty=Tensor[(4), int32] */;
+  %63 = where(%61, %62, meta[relay.Constant][4] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_6 */ /* ty=Tensor[(4), int32] */;
+  %64 = greater_equal(%63, %60) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_7 */ /* ty=Tensor[(4), bool] */;
+  %65 = shape_of(%57, dtype="int32") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_9 */ /* ty=Tensor[(4), int32] */;
+  %66 = cast(36 /* ty=int32 */, dtype="int64") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_12 */ /* ty=int64 */;
+  %67 = cast(%65, dtype="int64") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_10 */ /* ty=Tensor[(4), int64] */;
+  %68 = expand_dims(2 /* ty=int32 */, axis=0) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_11 */ /* ty=Tensor[(1), int32] */;
+  %69 = expand_dims(%66, axis=0) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_13 */ /* ty=Tensor[(1), int64] */;
+  %70 = where(%64, %60, %63) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_8 */ /* ty=Tensor[(4), int32] */;
+  %71 = scatter(%67, %68, %69) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_14 */ /* ty=Tensor[(4), int64] */;
+  %72 = cast_like(0 /* ty=int32 */, meta[relay.Constant][6] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_0 */ /* ty=int32 */;
+  %73 = dyn.strided_slice(%57, %70, %71, meta[relay.Constant][5] /* ty=Tensor[(4), int32] */, begin=None, end=None, strides=None, axes=None) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(?, ?, ?, ?), float32] */;
+  %74 = shape_of(%73, dtype="int32") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_2 */ /* ty=Tensor[(4), int32] */;
+  %75 = cast_like(%74, meta[relay.Constant][6] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_3 */ /* ty=Tensor[(4), int32] */;
+  %76 = slice_like(%75, meta[relay.Constant][6] /* ty=Tensor[(4), int32] */, axes=None) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_4 */ /* ty=Tensor[(4), int32] */;
+  %77 = less(meta[relay.Constant][6] /* ty=Tensor[(4), int32] */, %72) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_1 */ /* ty=Tensor[(4), bool] */;
+  %78 = add(meta[relay.Constant][6] /* ty=Tensor[(4), int32] */, %76) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_5 */ /* ty=Tensor[(4), int32] */;
+  %79 = where(%77, %78, meta[relay.Constant][6] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_6 */ /* ty=Tensor[(4), int32] */;
+  %80 = greater_equal(%79, %76) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_7 */ /* ty=Tensor[(4), bool] */;
+  %81 = shape_of(%73, dtype="int32") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_9 */ /* ty=Tensor[(4), int32] */;
+  %82 = cast(64 /* ty=int32 */, dtype="int64") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_12 */ /* ty=int64 */;
+  %83 = cast(%81, dtype="int64") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_10 */ /* ty=Tensor[(4), int64] */;
+  %84 = expand_dims(3 /* ty=int32 */, axis=0) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_11 */ /* ty=Tensor[(1), int32] */;
+  %85 = expand_dims(%82, axis=0) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_13 */ /* ty=Tensor[(1), int64] */;
+  %86 = where(%80, %76, %79) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_8 */ /* ty=Tensor[(4), int32] */;
+  %87 = scatter(%83, %84, %85) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d_PART_14 */ /* ty=Tensor[(4), int64] */;
+  %88 = dyn.strided_slice(%73, %86, %87, meta[relay.Constant][7] /* ty=Tensor[(4), int32] */, begin=None, end=None, strides=None, axes=None) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(?, ?, ?, ?), float32] */;
+  %89 = nn.deformable_conv2d(%49, %88, %mid_part_1_4_dconv_weight, padding=[1, 1, 1, 1], channels=8, kernel_size=[3, 3]) /* C.graph: torchvision::deform_conv2d, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::4 */ /* ty=Tensor[(1, 8, 36, 64), float32] */;
+  %90 = broadcast_to(%mid_part_1_5_weight, shape=[8], dtype="") /* C.graph: aten::prelu, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/torch.nn.modules.activation.PReLU::5_PART_0 */ /* ty=Tensor[(8), float32] */;
+  %91 = nn.prelu(%89, %90) /* C.graph: aten::prelu, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/torch.nn.modules.activation.PReLU::5 */ /* ty=Tensor[(1, 8, 36, 64), float32] */;
+  %92 = nn.avg_pool2d(%91, pool_size=[4, 4], strides=[4, 4], padding=[0, 0, 0, 0], count_include_pad=True) /* C.graph: aten::avg_pool2d, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d/torch.nn.modules.container.Sequential::off2d_1/torch.nn.modules.pooling.AvgPool2d::0 */ /* ty=Tensor[(1, 8, 9, 16), float32] */;
+  %93 = nn.conv2d(%92, %mid_part_2_0_off2d_off2d_1_1_weight, padding=[1, 1, 1, 1], channels=18, kernel_size=[3, 3]) /* C.graph: aten::_convolution, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d/torch.nn.modules.container.Sequential::off2d_1/torch.nn.modules.conv.Conv2d::1_PART_0 */ /* ty=Tensor[(1, 18, 9, 16), float32] */;
+  %94 = nn.bias_add(%93, %mid_part_2_0_off2d_off2d_1_1_bias) /* C.graph: aten::_convolution, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d/torch.nn.modules.container.Sequential::off2d_1/torch.nn.modules.conv.Conv2d::1 */ /* ty=Tensor[(1, 18, 9, 16), float32] */;
+  %95 = clip(%94, a_min=-1f, a_max=1f) /* C.graph: aten::clamp, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(1, 18, 9, 16), float32] */;
+  %96 = repeat(%95, repeats=4, axis=2) /* C.graph: aten::repeat_interleave, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(1, 18, 36, 16), float32] */;
+  %97 = repeat(%96, repeats=4, axis=3) /* C.graph: aten::repeat_interleave, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(1, 18, 36, 64), float32] */;
+  %98 = cast_like(0 /* ty=int32 */, meta[relay.Constant][8] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_0 */ /* ty=int32 */;
+  %99 = nn.pad(%97, 0 /* ty=int32 */, pad_width=[[0, 0], [0, 0], [0, 0], [0, 0]], pad_mode="edge") /* C.graph: aten::pad, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(1, 18, 36, 64), float32] */;
+  %100 = shape_of(%99, dtype="int32") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_2 */ /* ty=Tensor[(4), int32] */;
+  %101 = cast_like(%100, meta[relay.Constant][8] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_3 */ /* ty=Tensor[(4), int32] */;
+  %102 = slice_like(%101, meta[relay.Constant][8] /* ty=Tensor[(4), int32] */, axes=None) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_4 */ /* ty=Tensor[(4), int32] */;
+  %103 = less(meta[relay.Constant][8] /* ty=Tensor[(4), int32] */, %98) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_1 */ /* ty=Tensor[(4), bool] */;
+  %104 = add(meta[relay.Constant][8] /* ty=Tensor[(4), int32] */, %102) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_5 */ /* ty=Tensor[(4), int32] */;
+  %105 = where(%103, %104, meta[relay.Constant][8] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_6 */ /* ty=Tensor[(4), int32] */;
+  %106 = greater_equal(%105, %102) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_7 */ /* ty=Tensor[(4), bool] */;
+  %107 = shape_of(%99, dtype="int32") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_9 */ /* ty=Tensor[(4), int32] */;
+  %108 = cast(36 /* ty=int32 */, dtype="int64") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_12 */ /* ty=int64 */;
+  %109 = cast(%107, dtype="int64") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_10 */ /* ty=Tensor[(4), int64] */;
+  %110 = expand_dims(2 /* ty=int32 */, axis=0) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_11 */ /* ty=Tensor[(1), int32] */;
+  %111 = expand_dims(%108, axis=0) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_13 */ /* ty=Tensor[(1), int64] */;
+  %112 = where(%106, %102, %105) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_8 */ /* ty=Tensor[(4), int32] */;
+  %113 = scatter(%109, %110, %111) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_14 */ /* ty=Tensor[(4), int64] */;
+  %114 = cast_like(0 /* ty=int32 */, meta[relay.Constant][10] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_0 */ /* ty=int32 */;
+  %115 = dyn.strided_slice(%99, %112, %113, meta[relay.Constant][9] /* ty=Tensor[(4), int32] */, begin=None, end=None, strides=None, axes=None) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(?, ?, ?, ?), float32] */;
+  %116 = shape_of(%115, dtype="int32") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_2 */ /* ty=Tensor[(4), int32] */;
+  %117 = cast_like(%116, meta[relay.Constant][10] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_3 */ /* ty=Tensor[(4), int32] */;
+  %118 = slice_like(%117, meta[relay.Constant][10] /* ty=Tensor[(4), int32] */, axes=None) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_4 */ /* ty=Tensor[(4), int32] */;
+  %119 = less(meta[relay.Constant][10] /* ty=Tensor[(4), int32] */, %114) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_1 */ /* ty=Tensor[(4), bool] */;
+  %120 = add(meta[relay.Constant][10] /* ty=Tensor[(4), int32] */, %118) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_5 */ /* ty=Tensor[(4), int32] */;
+  %121 = where(%119, %120, meta[relay.Constant][10] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_6 */ /* ty=Tensor[(4), int32] */;
+  %122 = greater_equal(%121, %118) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_7 */ /* ty=Tensor[(4), bool] */;
+  %123 = shape_of(%115, dtype="int32") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_9 */ /* ty=Tensor[(4), int32] */;
+  %124 = cast(64 /* ty=int32 */, dtype="int64") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_12 */ /* ty=int64 */;
+  %125 = cast(%123, dtype="int64") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_10 */ /* ty=Tensor[(4), int64] */;
+  %126 = expand_dims(3 /* ty=int32 */, axis=0) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_11 */ /* ty=Tensor[(1), int32] */;
+  %127 = expand_dims(%124, axis=0) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_13 */ /* ty=Tensor[(1), int64] */;
+  %128 = where(%122, %118, %121) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_8 */ /* ty=Tensor[(4), int32] */;
+  %129 = scatter(%125, %126, %127) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d_PART_14 */ /* ty=Tensor[(4), int64] */;
+  %130 = dyn.strided_slice(%115, %128, %129, meta[relay.Constant][11] /* ty=Tensor[(4), int32] */, begin=None, end=None, strides=None, axes=None) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(?, ?, ?, ?), float32] */;
+  %131 = nn.deformable_conv2d(%91, %130, %mid_part_2_0_dconv_weight, padding=[1, 1, 1, 1], channels=8, kernel_size=[3, 3]) /* C.graph: torchvision::deform_conv2d, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::0 */ /* ty=Tensor[(1, 8, 36, 64), float32] */;
+  %132 = broadcast_to(%mid_part_2_1_weight, shape=[8], dtype="") /* C.graph: aten::prelu, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/torch.nn.modules.activation.PReLU::1_PART_0 */ /* ty=Tensor[(8), float32] */;
+  %133 = nn.prelu(%131, %132) /* C.graph: aten::prelu, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/torch.nn.modules.activation.PReLU::1 */ /* ty=Tensor[(1, 8, 36, 64), float32] */;
+  %134 = nn.avg_pool2d(%133, pool_size=[4, 4], strides=[4, 4], padding=[0, 0, 0, 0], count_include_pad=True) /* C.graph: aten::avg_pool2d, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d/torch.nn.modules.container.Sequential::off2d_1/torch.nn.modules.pooling.AvgPool2d::0 */ /* ty=Tensor[(1, 8, 9, 16), float32] */;
+  %135 = nn.conv2d(%134, %mid_part_2_2_off2d_off2d_1_1_weight, padding=[1, 1, 1, 1], channels=18, kernel_size=[3, 3]) /* C.graph: aten::_convolution, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d/torch.nn.modules.container.Sequential::off2d_1/torch.nn.modules.conv.Conv2d::1_PART_0 */ /* ty=Tensor[(1, 18, 9, 16), float32] */;
+  %136 = nn.bias_add(%135, %mid_part_2_2_off2d_off2d_1_1_bias) /* C.graph: aten::_convolution, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d/torch.nn.modules.container.Sequential::off2d_1/torch.nn.modules.conv.Conv2d::1 */ /* ty=Tensor[(1, 18, 9, 16), float32] */;
+  %137 = clip(%136, a_min=-1f, a_max=1f) /* C.graph: aten::clamp, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(1, 18, 9, 16), float32] */;
+  %138 = repeat(%137, repeats=4, axis=2) /* C.graph: aten::repeat_interleave, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(1, 18, 36, 16), float32] */;
+  %139 = repeat(%138, repeats=4, axis=3) /* C.graph: aten::repeat_interleave, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(1, 18, 36, 64), float32] */;
+  %140 = cast_like(0 /* ty=int32 */, meta[relay.Constant][12] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_0 */ /* ty=int32 */;
+  %141 = nn.pad(%139, 0 /* ty=int32 */, pad_width=[[0, 0], [0, 0], [0, 0], [0, 0]], pad_mode="edge") /* C.graph: aten::pad, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(1, 18, 36, 64), float32] */;
+  %142 = shape_of(%141, dtype="int32") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_2 */ /* ty=Tensor[(4), int32] */;
+  %143 = cast_like(%142, meta[relay.Constant][12] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_3 */ /* ty=Tensor[(4), int32] */;
+  %144 = slice_like(%143, meta[relay.Constant][12] /* ty=Tensor[(4), int32] */, axes=None) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_4 */ /* ty=Tensor[(4), int32] */;
+  %145 = less(meta[relay.Constant][12] /* ty=Tensor[(4), int32] */, %140) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_1 */ /* ty=Tensor[(4), bool] */;
+  %146 = add(meta[relay.Constant][12] /* ty=Tensor[(4), int32] */, %144) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_5 */ /* ty=Tensor[(4), int32] */;
+  %147 = where(%145, %146, meta[relay.Constant][12] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_6 */ /* ty=Tensor[(4), int32] */;
+  %148 = greater_equal(%147, %144) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_7 */ /* ty=Tensor[(4), bool] */;
+  %149 = shape_of(%141, dtype="int32") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_9 */ /* ty=Tensor[(4), int32] */;
+  %150 = cast(36 /* ty=int32 */, dtype="int64") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_12 */ /* ty=int64 */;
+  %151 = cast(%149, dtype="int64") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_10 */ /* ty=Tensor[(4), int64] */;
+  %152 = expand_dims(2 /* ty=int32 */, axis=0) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_11 */ /* ty=Tensor[(1), int32] */;
+  %153 = expand_dims(%150, axis=0) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_13 */ /* ty=Tensor[(1), int64] */;
+  %154 = where(%148, %144, %147) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_8 */ /* ty=Tensor[(4), int32] */;
+  %155 = scatter(%151, %152, %153) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_14 */ /* ty=Tensor[(4), int64] */;
+  %156 = cast_like(0 /* ty=int32 */, meta[relay.Constant][14] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_0 */ /* ty=int32 */;
+  %157 = dyn.strided_slice(%141, %154, %155, meta[relay.Constant][13] /* ty=Tensor[(4), int32] */, begin=None, end=None, strides=None, axes=None) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(?, ?, ?, ?), float32] */;
+  %158 = shape_of(%157, dtype="int32") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_2 */ /* ty=Tensor[(4), int32] */;
+  %159 = cast_like(%158, meta[relay.Constant][14] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_3 */ /* ty=Tensor[(4), int32] */;
+  %160 = slice_like(%159, meta[relay.Constant][14] /* ty=Tensor[(4), int32] */, axes=None) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_4 */ /* ty=Tensor[(4), int32] */;
+  %161 = less(meta[relay.Constant][14] /* ty=Tensor[(4), int32] */, %156) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_1 */ /* ty=Tensor[(4), bool] */;
+  %162 = add(meta[relay.Constant][14] /* ty=Tensor[(4), int32] */, %160) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_5 */ /* ty=Tensor[(4), int32] */;
+  %163 = where(%161, %162, meta[relay.Constant][14] /* ty=Tensor[(4), int32] */) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_6 */ /* ty=Tensor[(4), int32] */;
+  %164 = greater_equal(%163, %160) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_7 */ /* ty=Tensor[(4), bool] */;
+  %165 = shape_of(%157, dtype="int32") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_9 */ /* ty=Tensor[(4), int32] */;
+  %166 = cast(64 /* ty=int32 */, dtype="int64") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_12 */ /* ty=int64 */;
+  %167 = cast(%165, dtype="int64") /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_10 */ /* ty=Tensor[(4), int64] */;
+  %168 = expand_dims(3 /* ty=int32 */, axis=0) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_11 */ /* ty=Tensor[(1), int32] */;
+  %169 = expand_dims(%166, axis=0) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_13 */ /* ty=Tensor[(1), int64] */;
+  %170 = where(%164, %160, %163) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_8 */ /* ty=Tensor[(4), int32] */;
+  %171 = scatter(%167, %168, %169) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d_PART_14 */ /* ty=Tensor[(4), int64] */;
+  %172 = dyn.strided_slice(%157, %170, %171, meta[relay.Constant][15] /* ty=Tensor[(4), int32] */, begin=None, end=None, strides=None, axes=None) /* C.graph: aten::slice, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2/models_new_930.OffsetGenerator::off2d */ /* ty=Tensor[(?, ?, ?, ?), float32] */;
+  %173 = nn.deformable_conv2d(%133, %172, %mid_part_2_2_dconv_weight, padding=[1, 1, 1, 1], channels=8, kernel_size=[3, 3]) /* C.graph: torchvision::deform_conv2d, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.DeformableConv2d::2 */ /* ty=Tensor[(1, 8, 36, 64), float32] */;
+  %174 = broadcast_to(%mid_part_2_3_weight, shape=[8], dtype="") /* C.graph: aten::prelu, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/torch.nn.modules.activation.PReLU::3_PART_0 */ /* ty=Tensor[(8), float32] */;
+  %175 = nn.prelu(%173, %174) /* C.graph: aten::prelu, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/torch.nn.modules.activation.PReLU::3 */ /* ty=Tensor[(1, 8, 36, 64), float32] */;
+  %176 = nn.conv2d(%175, %mid_part_2_4_weight, padding=[0, 0, 0, 0], channels=32, kernel_size=[1, 1]) /* C.graph: aten::_convolution, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/torch.nn.modules.conv.Conv2d::4_PART_0 */ /* ty=Tensor[(1, 32, 36, 64), float32] */;
+  %177 = nn.bias_add(%176, %mid_part_2_4_bias) /* C.graph: aten::_convolution, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/torch.nn.modules.conv.Conv2d::4 */ /* ty=Tensor[(1, 32, 36, 64), float32] */;
+  %178 = broadcast_to(%mid_part_2_5_weight, shape=[32], dtype="") /* C.graph: aten::prelu, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/torch.nn.modules.activation.PReLU::5_PART_0 */ /* ty=Tensor[(32), float32] */;
+  %179 = nn.prelu(%177, %178) /* C.graph: aten::prelu, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/torch.nn.modules.activation.PReLU::5 */ /* ty=Tensor[(1, 32, 36, 64), float32] */;
+  %180 = nn.conv2d(%179, %last_part_conv_weight, padding=[1, 1, 1, 1], channels=4, kernel_size=[3, 3]) /* C.graph: aten::_convolution, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.UpsampleBlock::last_part/torch.nn.modules.conv.Conv2d::conv_PART_0 */ /* ty=Tensor[(1, 4, 36, 64), float32] */;
+  %181 = nn.bias_add(%180, %last_part_conv_bias) /* C.graph: aten::_convolution, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.UpsampleBlock::last_part/torch.nn.modules.conv.Conv2d::conv */ /* ty=Tensor[(1, 4, 36, 64), float32] */;
+  %182 = reshape(%181, newshape=[1, 1, 2, 2, 36, 64]) /* C.graph: aten::pixel_shuffle, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.UpsampleBlock::last_part/torch.nn.modules.pixelshuffle.PixelShuffle::pixel_shuffle_PART_0 */ /* ty=Tensor[(1, 1, 2, 2, 36, 64), float32] */;
+  %183 = transpose(%182, axes=[0, 1, 4, 2, 5, 3]) /* C.graph: aten::pixel_shuffle, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.UpsampleBlock::last_part/torch.nn.modules.pixelshuffle.PixelShuffle::pixel_shuffle_PART_1 */ /* ty=Tensor[(1, 1, 36, 2, 64, 2), float32] */;
+  reshape(%183, newshape=[1, 1, 72, 128]) /* C.graph: aten::pixel_shuffle, jit._trace.TopLevelTracedModule: models_new_930.FSRCNN::/models_new_930.UpsampleBlock::last_part/torch.nn.modules.pixelshuffle.PixelShuffle::pixel_shuffle */ /* ty=Tensor[(1, 1, 72, 128), float32] */
+}
+
+/* For debugging purposes the metadata section has been omitted.
+ * If you would like to see the full metadata section you can set the 
+ * option to `True` when invoking `astext`. 
+ */

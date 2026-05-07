@@ -1,0 +1,103 @@
+#[version = "0.0.5"]
+def @main(%data: Tensor[(1, 1, 256, 256), float32] /* ty=Tensor[(1, 1, 256, 256), float32] span=/conv1/conv1.0/Conv.data:0:0 */) -> Tensor[(1, 1, 256, 256), float32] {
+  %0 = nn.conv2d(%data, meta[relay.Constant][0] /* ty=Tensor[(8, 1, 3, 3), float32] span=/conv1/conv1.0/Conv.onnx::Conv_220:0:0 */, padding=[1, 1, 1, 1], channels=8, kernel_size=[3, 3]) /* ty=Tensor[(1, 8, 256, 256), float32] span=/conv1/conv1.0/Conv:0:0 */;
+  %1 = nn.bias_add(%0, meta[relay.Constant][1] /* ty=Tensor[(8), float32] span=/conv1/conv1.0/Conv.onnx::Conv_221:0:0 */) /* ty=Tensor[(1, 8, 256, 256), float32] span=/conv1/conv1.0/Conv:0:0 */;
+  %2 = nn.relu(%1) /* ty=Tensor[(1, 8, 256, 256), float32] span=/conv1/conv1.2/Relu:0:0 */;
+  %3 = nn.conv2d(%2, meta[relay.Constant][2] /* ty=Tensor[(8, 8, 3, 3), float32] span=/conv1_2/conv1_2.0/Conv.onnx::Conv_223:0:0 */, padding=[1, 1, 1, 1], channels=8, kernel_size=[3, 3]) /* ty=Tensor[(1, 8, 256, 256), float32] span=/conv1_2/conv1_2.0/Conv:0:0 */;
+  %4 = nn.bias_add(%3, meta[relay.Constant][3] /* ty=Tensor[(8), float32] span=/conv1_2/conv1_2.0/Conv.onnx::Conv_224:0:0 */) /* ty=Tensor[(1, 8, 256, 256), float32] span=/conv1_2/conv1_2.0/Conv:0:0 */;
+  %5 = nn.relu(%4) /* ty=Tensor[(1, 8, 256, 256), float32] span=/conv1_2/conv1_2.2/Relu:0:0 */;
+  %6 = nn.max_pool2d(%5, pool_size=[2, 2], strides=[2, 2], padding=[0, 0, 0, 0]) /* ty=Tensor[(1, 8, 128, 128), float32] span=/conv2/conv2.0/MaxPool:0:0 */;
+  %7 = nn.conv2d(%6, meta[relay.Constant][4] /* ty=Tensor[(16, 8, 3, 3), float32] span=/conv2/conv2.1/Conv.onnx::Conv_226:0:0 */, padding=[1, 1, 1, 1], channels=16, kernel_size=[3, 3]) /* ty=Tensor[(1, 16, 128, 128), float32] span=/conv2/conv2.1/Conv:0:0 */;
+  %8 = nn.bias_add(%7, meta[relay.Constant][5] /* ty=Tensor[(16), float32] span=/conv2/conv2.1/Conv.onnx::Conv_227:0:0 */) /* ty=Tensor[(1, 16, 128, 128), float32] span=/conv2/conv2.1/Conv:0:0 */;
+  %9 = nn.relu(%8) /* ty=Tensor[(1, 16, 128, 128), float32] span=/conv2/conv2.3/Relu:0:0 */;
+  %10 = nn.conv2d(%9, meta[relay.Constant][6] /* ty=Tensor[(16, 16, 3, 3), float32] span=/conv3/conv3.0/Conv.onnx::Conv_229:0:0 */, padding=[1, 1, 1, 1], channels=16, kernel_size=[3, 3]) /* ty=Tensor[(1, 16, 128, 128), float32] span=/conv3/conv3.0/Conv:0:0 */;
+  %11 = nn.bias_add(%10, meta[relay.Constant][7] /* ty=Tensor[(16), float32] span=/conv3/conv3.0/Conv.onnx::Conv_230:0:0 */) /* ty=Tensor[(1, 16, 128, 128), float32] span=/conv3/conv3.0/Conv:0:0 */;
+  %12 = nn.relu(%11) /* ty=Tensor[(1, 16, 128, 128), float32] span=/conv3/conv3.2/Relu:0:0 */;
+  %13 = nn.max_pool2d(%12, pool_size=[2, 2], strides=[2, 2], padding=[0, 0, 0, 0]) /* ty=Tensor[(1, 16, 64, 64), float32] span=/conv4/conv4.0/MaxPool:0:0 */;
+  %14 = nn.conv2d(%13, meta[relay.Constant][8] /* ty=Tensor[(32, 16, 3, 3), float32] span=/conv4/conv4.1/Conv.onnx::Conv_232:0:0 */, padding=[1, 1, 1, 1], channels=32, kernel_size=[3, 3]) /* ty=Tensor[(1, 32, 64, 64), float32] span=/conv4/conv4.1/Conv:0:0 */;
+  %15 = nn.bias_add(%14, meta[relay.Constant][9] /* ty=Tensor[(32), float32] span=/conv4/conv4.1/Conv.onnx::Conv_233:0:0 */) /* ty=Tensor[(1, 32, 64, 64), float32] span=/conv4/conv4.1/Conv:0:0 */;
+  %16 = nn.relu(%15) /* ty=Tensor[(1, 32, 64, 64), float32] span=/conv4/conv4.3/Relu:0:0 */;
+  %17 = nn.conv2d(%16, meta[relay.Constant][10] /* ty=Tensor[(32, 32, 3, 3), float32] span=/conv5/conv5.0/Conv.onnx::Conv_235:0:0 */, padding=[1, 1, 1, 1], channels=32, kernel_size=[3, 3]) /* ty=Tensor[(1, 32, 64, 64), float32] span=/conv5/conv5.0/Conv:0:0 */;
+  %18 = nn.bias_add(%17, meta[relay.Constant][11] /* ty=Tensor[(32), float32] span=/conv5/conv5.0/Conv.onnx::Conv_236:0:0 */) /* ty=Tensor[(1, 32, 64, 64), float32] span=/conv5/conv5.0/Conv:0:0 */;
+  %19 = nn.relu(%18) /* ty=Tensor[(1, 32, 64, 64), float32] span=/conv5/conv5.2/Relu:0:0 */;
+  %20 = nn.max_pool2d(%19, pool_size=[2, 2], strides=[2, 2], padding=[0, 0, 0, 0]) /* ty=Tensor[(1, 32, 32, 32), float32] span=/conv6/conv6.0/MaxPool:0:0 */;
+  %21 = nn.conv2d(%20, meta[relay.Constant][12] /* ty=Tensor[(32, 32, 3, 3), float32] span=/conv6/conv6.1/Conv.conv6.1.weight:0:0 */, padding=[1, 1, 1, 1], channels=32, kernel_size=[3, 3]) /* ty=Tensor[(1, 32, 32, 32), float32] span=/conv6/conv6.1/Conv:0:0 */;
+  %22 = nn.bias_add(%21, meta[relay.Constant][13] /* ty=Tensor[(32), float32] span=/conv6/conv6.1/Conv.conv6.1.bias:0:0 */) /* ty=Tensor[(1, 32, 32, 32), float32] span=/conv6/conv6.1/Conv:0:0 */;
+  %23 = nn.conv2d(%22, meta[relay.Constant][14] /* ty=Tensor[(64, 32, 1, 1), float32] span=/conv6/conv6.2/Conv.onnx::Conv_238:0:0 */, padding=[0, 0, 0, 0], channels=64, kernel_size=[1, 1]) /* ty=Tensor[(1, 64, 32, 32), float32] span=/conv6/conv6.2/Conv:0:0 */;
+  %24 = nn.bias_add(%23, meta[relay.Constant][15] /* ty=Tensor[(64), float32] span=/conv6/conv6.2/Conv.onnx::Conv_239:0:0 */) /* ty=Tensor[(1, 64, 32, 32), float32] span=/conv6/conv6.2/Conv:0:0 */;
+  %25 = nn.relu(%24) /* ty=Tensor[(1, 64, 32, 32), float32] span=/conv6/conv6.4/Relu:0:0 */;
+  %26 = nn.conv2d(%25, meta[relay.Constant][16] /* ty=Tensor[(64, 1, 3, 3), float32] span=/conv7/conv7.0/Conv.conv7.0.weight:0:0 */, padding=[1, 1, 1, 1], groups=64, channels=64, kernel_size=[3, 3]) /* ty=Tensor[(1, 64, 32, 32), float32] span=/conv7/conv7.0/Conv:0:0 */;
+  %27 = nn.bias_add(%26, meta[relay.Constant][17] /* ty=Tensor[(64), float32] span=/conv7/conv7.0/Conv.conv7.0.bias:0:0 */) /* ty=Tensor[(1, 64, 32, 32), float32] span=/conv7/conv7.0/Conv:0:0 */;
+  %28 = nn.conv2d(%27, meta[relay.Constant][18] /* ty=Tensor[(64, 64, 1, 1), float32] span=/conv7/conv7.1/Conv.onnx::Conv_241:0:0 */, padding=[0, 0, 0, 0], channels=64, kernel_size=[1, 1]) /* ty=Tensor[(1, 64, 32, 32), float32] span=/conv7/conv7.1/Conv:0:0 */;
+  %29 = nn.bias_add(%28, meta[relay.Constant][19] /* ty=Tensor[(64), float32] span=/conv7/conv7.1/Conv.onnx::Conv_242:0:0 */) /* ty=Tensor[(1, 64, 32, 32), float32] span=/conv7/conv7.1/Conv:0:0 */;
+  %30 = nn.relu(%29) /* ty=Tensor[(1, 64, 32, 32), float32] span=/conv7/conv7.3/Relu:0:0 */;
+  %31 = nn.max_pool2d(%30, pool_size=[2, 2], strides=[2, 2], padding=[0, 0, 0, 0]) /* ty=Tensor[(1, 64, 16, 16), float32] span=/conv8/conv8.0/MaxPool:0:0 */;
+  %32 = nn.conv2d(%31, meta[relay.Constant][20] /* ty=Tensor[(64, 1, 3, 3), float32] span=/conv8/conv8.1/Conv.conv8.1.weight:0:0 */, padding=[1, 1, 1, 1], groups=64, channels=64, kernel_size=[3, 3]) /* ty=Tensor[(1, 64, 16, 16), float32] span=/conv8/conv8.1/Conv:0:0 */;
+  %33 = nn.bias_add(%32, meta[relay.Constant][21] /* ty=Tensor[(64), float32] span=/conv8/conv8.1/Conv.conv8.1.bias:0:0 */) /* ty=Tensor[(1, 64, 16, 16), float32] span=/conv8/conv8.1/Conv:0:0 */;
+  %34 = nn.conv2d(%33, meta[relay.Constant][22] /* ty=Tensor[(64, 64, 1, 1), float32] span=/conv8/conv8.2/Conv.onnx::Conv_244:0:0 */, padding=[0, 0, 0, 0], channels=64, kernel_size=[1, 1]) /* ty=Tensor[(1, 64, 16, 16), float32] span=/conv8/conv8.2/Conv:0:0 */;
+  %35 = nn.bias_add(%34, meta[relay.Constant][23] /* ty=Tensor[(64), float32] span=/conv8/conv8.2/Conv.onnx::Conv_245:0:0 */) /* ty=Tensor[(1, 64, 16, 16), float32] span=/conv8/conv8.2/Conv:0:0 */;
+  %36 = nn.relu(%35) /* ty=Tensor[(1, 64, 16, 16), float32] span=/conv8/conv8.4/Relu:0:0 */;
+  %37 = nn.conv2d(%36, meta[relay.Constant][24] /* ty=Tensor[(64, 1, 3, 3), float32] span=/conv9/conv9.0/Conv.conv9.0.weight:0:0 */, padding=[1, 1, 1, 1], groups=64, channels=64, kernel_size=[3, 3]) /* ty=Tensor[(1, 64, 16, 16), float32] span=/conv9/conv9.0/Conv:0:0 */;
+  %38 = nn.bias_add(%37, meta[relay.Constant][25] /* ty=Tensor[(64), float32] span=/conv9/conv9.0/Conv.conv9.0.bias:0:0 */) /* ty=Tensor[(1, 64, 16, 16), float32] span=/conv9/conv9.0/Conv:0:0 */;
+  %39 = nn.conv2d(%38, meta[relay.Constant][26] /* ty=Tensor[(64, 64, 1, 1), float32] span=/conv9/conv9.1/Conv.onnx::Conv_247:0:0 */, padding=[0, 0, 0, 0], channels=64, kernel_size=[1, 1]) /* ty=Tensor[(1, 64, 16, 16), float32] span=/conv9/conv9.1/Conv:0:0 */;
+  %40 = nn.bias_add(%39, meta[relay.Constant][27] /* ty=Tensor[(64), float32] span=/conv9/conv9.1/Conv.onnx::Conv_248:0:0 */) /* ty=Tensor[(1, 64, 16, 16), float32] span=/conv9/conv9.1/Conv:0:0 */;
+  %41 = nn.relu(%40) /* ty=Tensor[(1, 64, 16, 16), float32] span=/conv9/conv9.3/Relu:0:0 */;
+  %42 = nn.conv2d(%41, meta[relay.Constant][28] /* ty=Tensor[(64, 1, 3, 3), float32] span=/conv10/conv10.0/Conv.conv10.0.weight:0:0 */, padding=[1, 1, 1, 1], groups=64, channels=64, kernel_size=[3, 3]) /* ty=Tensor[(1, 64, 16, 16), float32] span=/conv10/conv10.0/Conv:0:0 */;
+  %43 = nn.conv2d(%42, meta[relay.Constant][29] /* ty=Tensor[(256, 4, 1, 1), float32] span=/conv10/conv10.1/Conv.conv10.1.weight:0:0 */, padding=[0, 0, 0, 0], groups=16, channels=256, kernel_size=[1, 1]) /* ty=Tensor[(1, 256, 16, 16), float32] span=/conv10/conv10.1/Conv:0:0 */;
+  %44 = nn.depth_to_space(%43, block_size=2, mode="CRD") /* ty=Tensor[(1, 64, 32, 32), float32] span=/conv10/conv10.2/DepthToSpace:0:0 */;
+  %45 = nn.batch_norm(%44, meta[relay.Constant][30] /* ty=Tensor[(64), float32] span=/conv10/conv10.3/BatchNormalization.conv10.3.weight:0:0 */, meta[relay.Constant][31] /* ty=Tensor[(64), float32] span=/conv10/conv10.3/BatchNormalization.conv10.3.bias:0:0 */, meta[relay.Constant][32] /* ty=Tensor[(64), float32] span=/conv10/conv10.3/BatchNormalization.conv10.3.running_mean:0:0 */, meta[relay.Constant][33] /* ty=Tensor[(64), float32] span=/conv10/conv10.3/BatchNormalization:0:0 */) /* ty=(Tensor[(1, 64, 32, 32), float32], Tensor[(64), float32], Tensor[(64), float32]) span=/conv10/conv10.3/BatchNormalization:0:0 */;
+  %46 = %45.0 /* ty=Tensor[(1, 64, 32, 32), float32] span=/conv10/conv10.3/BatchNormalization:0:0 */;
+  %47 = nn.relu(%46) /* ty=Tensor[(1, 64, 32, 32), float32] span=/conv10/conv10.4/Relu:0:0 */;
+  %48 = (%47, %30) /* ty=(Tensor[(1, 64, 32, 32), float32], Tensor[(1, 64, 32, 32), float32]) span=/Concat:0:0 */;
+  %49 = concatenate(%48, axis=1) /* ty=Tensor[(1, 128, 32, 32), float32] span=/Concat:0:0 */;
+  %50 = nn.conv2d(%49, meta[relay.Constant][34] /* ty=Tensor[(128, 1, 3, 3), float32] span=/conv11/conv11.0/Conv.conv11.0.weight:0:0 */, padding=[1, 1, 1, 1], groups=128, channels=128, kernel_size=[3, 3]) /* ty=Tensor[(1, 128, 32, 32), float32] span=/conv11/conv11.0/Conv:0:0 */;
+  %51 = nn.conv2d(%50, meta[relay.Constant][35] /* ty=Tensor[(64, 8, 1, 1), float32] span=/conv11/conv11.1/Conv.onnx::Conv_250:0:0 */, padding=[0, 0, 0, 0], groups=16, channels=64, kernel_size=[1, 1]) /* ty=Tensor[(1, 64, 32, 32), float32] span=/conv11/conv11.1/Conv:0:0 */;
+  %52 = nn.bias_add(%51, meta[relay.Constant][36] /* ty=Tensor[(64), float32] span=/conv11/conv11.1/Conv.onnx::Conv_251:0:0 */) /* ty=Tensor[(1, 64, 32, 32), float32] span=/conv11/conv11.1/Conv:0:0 */;
+  %53 = nn.relu(%52) /* ty=Tensor[(1, 64, 32, 32), float32] span=/conv11/conv11.3/Relu:0:0 */;
+  %54 = nn.conv2d(%53, meta[relay.Constant][37] /* ty=Tensor[(64, 1, 3, 3), float32] span=/conv12/conv12.0/Conv.conv12.0.weight:0:0 */, padding=[1, 1, 1, 1], groups=64, channels=64, kernel_size=[3, 3]) /* ty=Tensor[(1, 64, 32, 32), float32] span=/conv12/conv12.0/Conv:0:0 */;
+  %55 = nn.conv2d(%54, meta[relay.Constant][38] /* ty=Tensor[(128, 4, 1, 1), float32] span=/conv12/conv12.1/Conv.conv12.1.weight:0:0 */, padding=[0, 0, 0, 0], groups=16, channels=128, kernel_size=[1, 1]) /* ty=Tensor[(1, 128, 32, 32), float32] span=/conv12/conv12.1/Conv:0:0 */;
+  %56 = nn.depth_to_space(%55, block_size=2, mode="CRD") /* ty=Tensor[(1, 32, 64, 64), float32] span=/conv12/conv12.2/DepthToSpace:0:0 */;
+  %57 = nn.batch_norm(%56, meta[relay.Constant][39] /* ty=Tensor[(32), float32] span=/conv12/conv12.3/BatchNormalization.conv12.3.weight:0:0 */, meta[relay.Constant][40] /* ty=Tensor[(32), float32] span=/conv12/conv12.3/BatchNormalization.conv12.3.bias:0:0 */, meta[relay.Constant][41] /* ty=Tensor[(32), float32] span=/conv12/conv12.3/BatchNormalization.conv12.3.running_mean:0:0 */, meta[relay.Constant][42] /* ty=Tensor[(32), float32] span=/conv12/conv12.3/BatchNormalization:0:0 */) /* ty=(Tensor[(1, 32, 64, 64), float32], Tensor[(32), float32], Tensor[(32), float32]) span=/conv12/conv12.3/BatchNormalization:0:0 */;
+  %58 = %57.0 /* ty=Tensor[(1, 32, 64, 64), float32] span=/conv12/conv12.3/BatchNormalization:0:0 */;
+  %59 = nn.relu(%58) /* ty=Tensor[(1, 32, 64, 64), float32] span=/conv12/conv12.4/Relu:0:0 */;
+  %60 = (%59, %19) /* ty=(Tensor[(1, 32, 64, 64), float32], Tensor[(1, 32, 64, 64), float32]) span=/Concat_1:0:0 */;
+  %61 = concatenate(%60, axis=1) /* ty=Tensor[(1, 64, 64, 64), float32] span=/Concat_1:0:0 */;
+  %62 = nn.conv2d(%61, meta[relay.Constant][43] /* ty=Tensor[(64, 1, 3, 3), float32] span=/conv13/conv13.0/Conv.conv13.0.weight:0:0 */, padding=[1, 1, 1, 1], groups=64, channels=64, kernel_size=[3, 3]) /* ty=Tensor[(1, 64, 64, 64), float32] span=/conv13/conv13.0/Conv:0:0 */;
+  %63 = nn.bias_add(%62, meta[relay.Constant][44] /* ty=Tensor[(64), float32] span=/conv13/conv13.0/Conv.conv13.0.bias:0:0 */) /* ty=Tensor[(1, 64, 64, 64), float32] span=/conv13/conv13.0/Conv:0:0 */;
+  %64 = nn.conv2d(%63, meta[relay.Constant][45] /* ty=Tensor[(16, 64, 1, 1), float32] span=/conv13/conv13.1/Conv.onnx::Conv_253:0:0 */, padding=[0, 0, 0, 0], channels=16, kernel_size=[1, 1]) /* ty=Tensor[(1, 16, 64, 64), float32] span=/conv13/conv13.1/Conv:0:0 */;
+  %65 = nn.bias_add(%64, meta[relay.Constant][46] /* ty=Tensor[(16), float32] span=/conv13/conv13.1/Conv.onnx::Conv_254:0:0 */) /* ty=Tensor[(1, 16, 64, 64), float32] span=/conv13/conv13.1/Conv:0:0 */;
+  %66 = nn.relu(%65) /* ty=Tensor[(1, 16, 64, 64), float32] span=/conv13/conv13.3/Relu:0:0 */;
+  %67 = nn.conv2d(%66, meta[relay.Constant][47] /* ty=Tensor[(16, 1, 3, 3), float32] span=/conv14/conv14.0/Conv.conv14.0.weight:0:0 */, padding=[1, 1, 1, 1], groups=16, channels=16, kernel_size=[3, 3]) /* ty=Tensor[(1, 16, 64, 64), float32] span=/conv14/conv14.0/Conv:0:0 */;
+  %68 = nn.bias_add(%67, meta[relay.Constant][48] /* ty=Tensor[(16), float32] span=/conv14/conv14.0/Conv.conv14.0.bias:0:0 */) /* ty=Tensor[(1, 16, 64, 64), float32] span=/conv14/conv14.0/Conv:0:0 */;
+  %69 = nn.conv2d(%68, meta[relay.Constant][49] /* ty=Tensor[(64, 16, 1, 1), float32] span=/conv14/conv14.1/Conv.conv14.1.weight:0:0 */, padding=[0, 0, 0, 0], channels=64, kernel_size=[1, 1]) /* ty=Tensor[(1, 64, 64, 64), float32] span=/conv14/conv14.1/Conv:0:0 */;
+  %70 = nn.bias_add(%69, meta[relay.Constant][50] /* ty=Tensor[(64), float32] span=/conv14/conv14.1/Conv.conv14.1.bias:0:0 */) /* ty=Tensor[(1, 64, 64, 64), float32] span=/conv14/conv14.1/Conv:0:0 */;
+  %71 = nn.depth_to_space(%70, block_size=2, mode="CRD") /* ty=Tensor[(1, 16, 128, 128), float32] span=/conv14/conv14.2/DepthToSpace:0:0 */;
+  %72 = nn.batch_norm(%71, meta[relay.Constant][51] /* ty=Tensor[(16), float32] span=/conv14/conv14.3/BatchNormalization.conv14.3.weight:0:0 */, meta[relay.Constant][52] /* ty=Tensor[(16), float32] span=/conv14/conv14.3/BatchNormalization.conv14.3.bias:0:0 */, meta[relay.Constant][53] /* ty=Tensor[(16), float32] span=/conv14/conv14.3/BatchNormalization.conv14.3.running_mean:0:0 */, meta[relay.Constant][54] /* ty=Tensor[(16), float32] span=/conv14/conv14.3/BatchNormalization:0:0 */) /* ty=(Tensor[(1, 16, 128, 128), float32], Tensor[(16), float32], Tensor[(16), float32]) span=/conv14/conv14.3/BatchNormalization:0:0 */;
+  %73 = %72.0 /* ty=Tensor[(1, 16, 128, 128), float32] span=/conv14/conv14.3/BatchNormalization:0:0 */;
+  %74 = nn.relu(%73) /* ty=Tensor[(1, 16, 128, 128), float32] span=/conv14/conv14.4/Relu:0:0 */;
+  %75 = (%74, %12) /* ty=(Tensor[(1, 16, 128, 128), float32], Tensor[(1, 16, 128, 128), float32]) span=/Concat_2:0:0 */;
+  %76 = concatenate(%75, axis=1) /* ty=Tensor[(1, 32, 128, 128), float32] span=/Concat_2:0:0 */;
+  %77 = nn.conv2d(%76, meta[relay.Constant][55] /* ty=Tensor[(16, 32, 3, 3), float32] span=/conv15/conv15.0/Conv.onnx::Conv_256:0:0 */, padding=[1, 1, 1, 1], channels=16, kernel_size=[3, 3]) /* ty=Tensor[(1, 16, 128, 128), float32] span=/conv15/conv15.0/Conv:0:0 */;
+  %78 = nn.bias_add(%77, meta[relay.Constant][56] /* ty=Tensor[(16), float32] span=/conv15/conv15.0/Conv.onnx::Conv_257:0:0 */) /* ty=Tensor[(1, 16, 128, 128), float32] span=/conv15/conv15.0/Conv:0:0 */;
+  %79 = nn.relu(%78) /* ty=Tensor[(1, 16, 128, 128), float32] span=/conv15/conv15.2/Relu:0:0 */;
+  %80 = nn.conv2d(%79, meta[relay.Constant][57] /* ty=Tensor[(32, 16, 3, 3), float32] span=/conv16/conv16.0/Conv.conv16.0.weight:0:0 */, padding=[1, 1, 1, 1], channels=32, kernel_size=[3, 3]) /* ty=Tensor[(1, 32, 128, 128), float32] span=/conv16/conv16.0/Conv:0:0 */;
+  %81 = nn.bias_add(%80, meta[relay.Constant][58] /* ty=Tensor[(32), float32] span=/conv16/conv16.0/Conv.conv16.0.bias:0:0 */) /* ty=Tensor[(1, 32, 128, 128), float32] span=/conv16/conv16.0/Conv:0:0 */;
+  %82 = nn.depth_to_space(%81, block_size=2, mode="CRD") /* ty=Tensor[(1, 8, 256, 256), float32] span=/conv16/conv16.1/DepthToSpace:0:0 */;
+  %83 = nn.batch_norm(%82, meta[relay.Constant][59] /* ty=Tensor[(8), float32] span=/conv16/conv16.2/BatchNormalization.conv16.2.weight:0:0 */, meta[relay.Constant][60] /* ty=Tensor[(8), float32] span=/conv16/conv16.2/BatchNormalization.conv16.2.bias:0:0 */, meta[relay.Constant][61] /* ty=Tensor[(8), float32] span=/conv16/conv16.2/BatchNormalization.conv16.2.running_mean:0:0 */, meta[relay.Constant][62] /* ty=Tensor[(8), float32] span=/conv16/conv16.2/BatchNormalization:0:0 */) /* ty=(Tensor[(1, 8, 256, 256), float32], Tensor[(8), float32], Tensor[(8), float32]) span=/conv16/conv16.2/BatchNormalization:0:0 */;
+  %84 = %83.0 /* ty=Tensor[(1, 8, 256, 256), float32] span=/conv16/conv16.2/BatchNormalization:0:0 */;
+  %85 = nn.relu(%84) /* ty=Tensor[(1, 8, 256, 256), float32] span=/conv16/conv16.3/Relu:0:0 */;
+  %86 = (%85, %5) /* ty=(Tensor[(1, 8, 256, 256), float32], Tensor[(1, 8, 256, 256), float32]) span=/Concat_3:0:0 */;
+  %87 = concatenate(%86, axis=1) /* ty=Tensor[(1, 16, 256, 256), float32] span=/Concat_3:0:0 */;
+  %88 = nn.conv2d(%87, meta[relay.Constant][63] /* ty=Tensor[(4, 16, 3, 3), float32] span=/conv17/conv17.0/Conv.onnx::Conv_259:0:0 */, padding=[1, 1, 1, 1], channels=4, kernel_size=[3, 3]) /* ty=Tensor[(1, 4, 256, 256), float32] span=/conv17/conv17.0/Conv:0:0 */;
+  %89 = nn.bias_add(%88, meta[relay.Constant][64] /* ty=Tensor[(4), float32] span=/conv17/conv17.0/Conv.onnx::Conv_260:0:0 */) /* ty=Tensor[(1, 4, 256, 256), float32] span=/conv17/conv17.0/Conv:0:0 */;
+  %90 = nn.relu(%89) /* ty=Tensor[(1, 4, 256, 256), float32] span=/conv17/conv17.2/Relu:0:0 */;
+  %91 = nn.conv2d(%90, meta[relay.Constant][65] /* ty=Tensor[(1, 4, 3, 3), float32] span=/conv18/conv18.0/Conv.conv18.0.weight:0:0 */, padding=[1, 1, 1, 1], channels=1, kernel_size=[3, 3]) /* ty=Tensor[(1, 1, 256, 256), float32] span=/conv18/conv18.0/Conv:0:0 */;
+  %92 = nn.bias_add(%91, meta[relay.Constant][66] /* ty=Tensor[(1), float32] span=/conv18/conv18.0/Conv.conv18.0.bias:0:0 */) /* ty=Tensor[(1, 1, 256, 256), float32] span=/conv18/conv18.0/Conv:0:0 */;
+  %93 = nn.depth_to_space(%92, mode="CRD") /* ty=Tensor[(1, 1, 256, 256), float32] span=/conv18/conv18.1/DepthToSpace:0:0 */;
+  sigmoid(%93) /* ty=Tensor[(1, 1, 256, 256), float32] span=output@@/Sigmoid:0:0 */
+}
+
+/* For debugging purposes the metadata section has been omitted.
+ * If you would like to see the full metadata section you can set the 
+ * option to `True` when invoking `astext`. 
+ */

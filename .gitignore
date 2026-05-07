@@ -1,6 +1,3 @@
-# Intermediate compiler outputs
-output/
-
 # Python virtual environment
 .venv_pptx/
 
