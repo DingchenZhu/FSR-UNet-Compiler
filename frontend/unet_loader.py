@@ -29,6 +29,7 @@ INPUT_SHAPES = {"data": (1, 1, 144, 256)}
 
 def make_config(
     output_dir: str = "output/unet/",
+    is_first: bool = False,
     load_next: bool = False,
     emit_image_load: bool = True,
     verbose: bool = False,
@@ -46,6 +47,7 @@ def make_config(
 
     return PipelineConfig(
         output_dir=output_dir,
+        is_first=is_first,
         load_next=load_next,
         emit_image_load=emit_image_load,
         # Phase 31: archived golden `pseudo_code_load_next_mid.txt` emits the
@@ -66,6 +68,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Compile SD-UNet via TVM frontend pipeline")
     parser.add_argument("--output-dir", default="output/unet/")
+    parser.add_argument("--is-first", action="store_true", default=False,
+                        help="Emit 5-instruction DDR preamble (matches golden first.txt)")
     parser.add_argument("--load-next", action="store_true", default=False)
     parser.add_argument("--no-emit-image-load", dest="emit_image_load", action="store_false", default=True)
     parser.add_argument("--golden", default=None, help="Optional golden file for diff")
@@ -77,6 +81,7 @@ if __name__ == "__main__":
 
     cfg = make_config(
         output_dir=args.output_dir,
+        is_first=args.is_first,
         load_next=args.load_next,
         emit_image_load=args.emit_image_load,
         verbose=args.verbose,
