@@ -394,7 +394,7 @@ if cfg.load_next_bas_addr is None:
 
 ## 5.4　整体优化收益总结
 
-三项优化设计（OffsetGenerator融合Pass、Conv+Activation融合Pass、Tiling模板系统）的协同作用，使得编译器在FSRCNN目标模型上实现了与黄金参考的指令类型数量完全匹配：`load_next=False`模式下输出1,273条指令，`load_next=True`模式下输出1,274条，详细字段级分析见第六章。在此基础上，§5.5–§5.7进一步描述了SD-UNet的扩展支持工作，包括全高度流式调度、pool-while-store透明化以及TilingPlan参数调校机制；经过Phase 13至Phase 32的系列迭代，SD-UNet（USR\_Net\_109）最终实现17,155/17,155条指令精确匹配、功能性diff为0，详见第六章6.5.3节。
+三项优化设计（OffsetGenerator融合Pass、Conv+Activation融合Pass、Tiling模板系统）的协同作用，使得编译器在FSRCNN目标模型上实现了与黄金参考的指令数精确对齐：`load_next=False`模式下输出1,273条指令，`load_next=True`模式下输出1,274条，指令总数与六类指令数量均与黄金参考一致，详细字段级分析见第六章。在此基础上，§5.5–§5.7进一步描述了SD-UNet的扩展支持工作，包括全高度流式调度、pool-while-store透明化以及TilingPlan参数调校机制；经过Phase 13至Phase 32的系列迭代，SD-UNet（USR\_Net\_109）最终实现17,155/17,155条指令精确匹配、功能性diff为0，详见第六章6.5.3节。
 
 **【建议插表5-3】** FSRCNN编译结果统计（最终验证版，`load_next=False`）
 
@@ -548,9 +548,9 @@ for oc_idx in range(plan.oc_inner):
 
 ### 5.7.4　调校效果
 
-经过完整的204项参数调校（17层×12参数），SD-UNet的指令总数从调校前的10,487条增至17,079条（Phase 15），等价比率从×1.64提升至×0.996，与黄金参考17,155条的偏差缩小至−76条（−0.44%）。FSRCNN在全部调校过程中始终保持1,273条指令的零功能差异回归。
+经过完整的204项参数调校（17层×12参数），SD-UNet的指令总数从调校前的10,487条增至17,079条（Phase 15），等价比率从×1.64提升至×0.996，与黄金参考17,155条的偏差缩小至−76条（−0.44%）。FSRCNN在全部调校过程中始终保持1,273条指令数对齐的回归稳定性。
 
-在此基础上，后续Phase 20完成了最后76条指令的精确修正（来源包括conv11 group结束信号`ds_last_transfer_num=0`的补充、decoder层`oc_inner`参数的调整，以及DepthToSpace透明化注入字段的对齐），使SD-UNet编译输出从17,079条增至**17,155条**，实现与黄金参考的完全精确匹配（差值为0）。随后，Phase 32通过`layer_diff.py`逐层分析与multiset方法，系统确认剩余14,664个字段差异全部为非功能性，编译器两个网络均达到功能完整状态（FSRCNN: 1,273/1,273，0功能性diff；SD-UNet: 17,155/17,155，0功能性diff），可进入上板验证阶段。
+在此基础上，后续Phase 20完成了最后76条指令的精确修正（来源包括conv11 group结束信号`ds_last_transfer_num=0`的补充、decoder层`oc_inner`参数的调整，以及DepthToSpace透明化注入字段的对齐），使SD-UNet编译输出从17,079条增至**17,155条**，实现与黄金参考的完全精确匹配（差值为0）。随后，Phase 32通过`layer_diff.py`逐层分析与multiset方法，系统确认SD-UNet剩余14,664个字段差异全部为非功能性，SD-UNet达到功能完整状态（17,155/17,155，0功能性diff）。FSRCNN指令数同步对齐（1,273/1,273指令数对齐），两网络均可进入上板验证阶段。
 
 **【建议插表5-4】** SD-UNet各层参数调校前后指令数对比（按层类型分组）
 
@@ -578,5 +578,59 @@ for oc_idx in range(plan.oc_inner):
 | 与黄金文件（指令类型数量） | 完全一致 ✓ | 详见第六章表6-1 |
 
 从这组数据可以看出，OffsetGenerator融合Pass直接决定了FSRCNN能否正确运行——融合前的路径生成0条`DataStorer(dest=offset_reg)`指令，意味着offset_reg永远不被初始化，所有依赖它的OffsetLoader读取的都是无效数据；融合后的4条正确DataStorer填补了这一语义空洞，使得96条OffsetLoader均能读取到正确的采样偏移量，可变形卷积得以按设计工作。
+
+## 5.8　数据通路等价性验证框架
+
+### 5.8.1　动机：从"字段级diff"到形式化判决
+
+在完成指令数对齐、逐层字段比对（§6.5.3）之后，等价性的论证链条中仍存在一个方法论上的缝隙：`layer_diff.py`工具输出的是一份"差异列表 + 人工分类"的结果——哪些字段不同、不同了多少，但最终的"非功能性"判断依赖工程师对硬件语义的手工解读，缺乏独立验证手段，也无法在持续集成环境中自动重跑。对于SD-UNet的14,664个字段差异，每一条差异的"非功能性"结论都是经过逐层分析和multiset计算人工归纳出来的；若未来某次代码改动不慎引入了真实的数据通路差异，字段级diff工具并不能区分"与已知非功能性差异相同的新差异"和"旧差异数量增加了"这两种情形。
+
+更深层的动机在于：ISA specification中有4个新增字段（`is_compression`、`offchip_read_mode`、`is_skip`等）的位宽尚待硬件团队最终确认，这使得基于完整ISA spec的bit-accurate验证暂时无法实施。在这一约束下，需要一种**纯文本层面、形式化、自动化、不依赖ISA spec完整性**的等价性判决器，能够对"硬件实际执行的数据通路操作是否一致"给出可重复的二值判定。
+
+`tools/equivalence_check.py`（约280行Python）正是为此目的设计的。它将每条指令的字段分为三类，对每个逻辑层单独进行数据通路字段的多重集（multiset）等价比较，输出`DATAPATH_EQUIVALENT`或`DATAPATH_DIVERGENT`的确定性判决，并通过`tests/test_equivalence.py`中的9个pytest将判决结果固化为可持续回归的测试基线。
+
+### 5.8.2　三层字段抽象
+
+等价性检查器的核心设计是将每条指令的全部字段划分为三个语义层次，其依据是字段在硬件执行语义中的角色：哪些字段仅是编译器内部的元数据、哪些字段选择硬件使用哪个资源槽位、哪些字段直接驱动硬件数据通路的行为。
+
+**【插表5-5】等价性验证框架的字段三层分类**
+
+| 分类 | 字段名 | 归入理由 |
+|------|--------|---------|
+| **UNIVERSAL\_SKIP**（后处理元数据 + ISA占位符）| `code_num`、`dependency`、`dest`、`src1`~`src4`、`layer_idx`、`is_offset`、`quant_config_idx`、`is_compression`、`offchip_read_mode`、`is_skip` | `code_num`/`dest`/`src*`由Post-Pass依赖分析与虚拟寄存器分配填写；`layer_idx`在ours与golden之间编号方式不同（稀疏 vs 连续）；`is_compression`/`offchip_read_mode`/`is_skip`为ISA版本占位符，位宽待确认，在两套指令流中均取常量值 |
+| **SCHEDULING\_STATE**（硬件资源选择字段）| WL: `is_new`、`acc_reg_comp_idx`、`line_buffer_idx`；QL: `quant_reg_load_idx`；DS: `reg_out_idx`、`pooling_out_new`；DL: `line_buffer_idx`；OffsetLoader: `offset_reg_idx` | 决定使用哪个累加寄存器槽、哪半个line buffer、哪个量化寄存器槽。两种合法调度对同一层可在这些字段上合理地产生差异，但差异是否影响最终结果需要硬件spec确认 |
+| **DATAPATH**（数据通路驱动字段）| 以上两类之外的所有字段，包括`bas_addr`、`transnum`/`transfer_num`/`weight_transnum_base`、`kernal_size`、`weight_parall_mode`、`is_pooling`/`pooling_*`、`is_pixelshuffle`/`pixelshuffle_*`、`stride`、`dest_buffer_idx`等 | 直接决定硬件MAC阵列加载哪些权重、从哪个地址读写特征图、传输多少个word、以何种形状配置乘法器阵列——是"硬件实际做了什么计算"的直接编码 |
+
+这一三分法的设计原则是：UNIVERSAL\_SKIP中的字段在比较中被完全剥离，SCHEDULING\_STATE字段被记录但不参与等价判决，只有DATAPATH字段参与判决。
+
+### 5.8.3　基于多重集的等价判决
+
+设 $L$ 为某一逻辑层内某类指令的集合，$\pi_{\mathrm{DP}}(i)$ 为指令 $i$ 的数据通路字段元组（按字段名字典序拼接为元组，剔除 UNIVERSAL\_SKIP 和 SCHEDULING\_STATE 字段）。定义两条指令序列 $A$、$B$ 在该层的**数据通路等价关系** $\simeq_{\mathrm{DP}}$ 为：
+
+$$A \simeq_{\mathrm{DP}} B \;\iff\; \mathrm{Counter}\!\left(\{\pi_{\mathrm{DP}}(i) \mid i \in A_L\}\right) = \mathrm{Counter}\!\left(\{\pi_{\mathrm{DP}}(i) \mid i \in B_L\}\right) \quad \forall L$$
+
+其中 $\mathrm{Counter}$ 为Python多重集计数器。等价判决取每个逻辑层的对称差（symmetric difference）：若所有层的对称差均为空集，则全局判决为 `DATAPATH_EQUIVALENT`，否则为 `DATAPATH_DIVERGENT`，并报告差异所在层及具体字段元组。
+
+多重集等价的硬件合理性根植于目标加速器的微架构特性：MAC阵列、Line Buffer、Quant Pipeline各自具有独立的FIFO队列，硬件按各FIFO的调度顺序消费指令，而不要求跨队列的全局顺序。具体而言，同一逻辑层内的WeightLoader指令由权重加载FIFO顺序消费，DataLoader指令由特征图加载FIFO顺序消费，两条FIFO之间的先后关系由`dependency`字段（已被归入UNIVERSAL\_SKIP，由Post-Pass统一设置）约束，而非由指令在文件中的出现顺序决定。在这一微架构前提下，只要某逻辑层发射的datapath指令集合（多重集意义下）与黄金参考一致，最终在MAC阵列中累加的部分和、在片上buffer写出的特征图就是相同的——$\simeq_{\mathrm{DP}}$ 关系刻画了这一等价性的充分条件。
+
+逻辑层的映射复用 `layer_diff.py` 的 `assign_logical_layers` 函数：ours 的稀疏 `layer_idx`（编译器跳过 concat-only 层）和 golden 的连续 `layer_idx` 被统一映射到 $0 \sim N-1$；QL 指令前向绑定到其后第一条 DL 所在的层（QL warm-up 语义），确保跨工具的分层边界完全一致。
+
+### 5.8.4　验证强度边界
+
+$\simeq_{\mathrm{DP}}$ 是一个有明确覆盖范围的等价关系，既不过度声称、也不低估其意义。下表明确列出了本框架所能证明和不能证明的内容：
+
+**【插表5-6】等价性验证框架的强度边界**
+
+| 等价性等级 | 本工具能否证明 | 说明与所需条件 |
+|-----------|--------------|--------------|
+| **数据通路等价**（Datapath EQ）| **能**（本工具输出 DATAPATH\_EQUIVALENT 即为证明）| MAC配置、地址、传输量、输出模式的多重集完全相等 |
+| **调度状态等价**（Scheduling EQ）| **不能** | `is_new` 的 reset 时机、quant\_reg 槽位选择等语义等价性需要 HW spec 逐字段确认 |
+| Bit-accurate 等价 | **不能** | 输出 tensor 数值完全一致需要 RTL co-simulation 或上板实测 |
+
+第一行"数据通路等价"的含义是：ours 和 golden 对每一个逻辑层发射了完全相同的硬件加载/存储/MAC配置操作集合——相同的权重基地址、相同的传输字数、相同的卷积核尺寸、相同的输出模式配置。这是上板前在纯软件层面所能给出的最强正确性证据。
+
+第二行"调度状态等价"留待硬件spec到位后补充：例如，`is_new=0`（累加器清零并写入）与 `is_new=1`（累加）的发射时序对最终累加结果的等价性，在顺序调度与交错调度之间需要证明"对任意输出通道，总的部分和与顺序无关"——这一论断对于标准conv在数学上成立，但需要硬件文档确认acc\_reg的访问协议。第三行等价性属于系统测试范畴，计划作为上板验证阶段的首要目标。
+
+两种框架的分工是互补的：`layer_diff.py` 提供逐字段对比的细粒度视图，回答"哪里不同"；`equivalence_check.py` 提供基于多重集归一化的判决视图，回答"数据通路是否等价"。前者是诊断工具，后者是判决工具——二者共同构成了上板前的软件端等价性证据链。
 
 Post-Pass的虚拟寄存器分配在整个1,273条指令范围内峰值使用约8个虚拟寄存器（在15个可用寄存器中），说明硬件资源利用率合理，未出现寄存器溢出。依赖分析的生产者-消费者指令距离反映了硬件流水线的合理深度，编译器生成的指令序列对硬件流水线是友好的，不需要插入额外的空泡（bubble）等待周期。

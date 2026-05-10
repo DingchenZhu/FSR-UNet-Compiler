@@ -1,0 +1,1067 @@
+{
+  "ours_path": "output/unet/pseudo_instructions.txt",
+  "golden_path": "/home/hansz/scratch-data/design/tvm-tiling/golden/pseudo_code_load_next_mid.txt",
+  "layers_checked": 19,
+  "layers_pass": 19,
+  "layers_fail": 0,
+  "total_datapath_diff": 0,
+  "overall_verdict": "DATAPATH_EQUIVALENT",
+  "per_layer": [
+    {
+      "layer": 0,
+      "ours_count": 434,
+      "golden_count": 434,
+      "datapath_diff": 0,
+      "verdict": "PASS",
+      "only_in_ours": [],
+      "only_in_golden": [],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 72,
+          "DataLoader.line_buffer_idx=1": 72
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 144,
+          "WeightLoader.acc_reg_comp_idx=0": 72,
+          "WeightLoader.line_buffer_idx=0": 72,
+          "WeightLoader.acc_reg_comp_idx=1": 72,
+          "WeightLoader.line_buffer_idx=1": 72
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 72,
+          "DataStorer.pooling_out_new=0": 144,
+          "DataStorer.reg_out_idx=1": 72
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 72,
+          "DataLoader.line_buffer_idx=1": 72
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=1": 144,
+          "WeightLoader.acc_reg_comp_idx=0": 72,
+          "WeightLoader.line_buffer_idx=0": 72,
+          "WeightLoader.acc_reg_comp_idx=1": 72,
+          "WeightLoader.line_buffer_idx=1": 72
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 72,
+          "DataStorer.pooling_out_new=0": 144,
+          "DataStorer.reg_out_idx=1": 72
+        }
+      }
+    },
+    {
+      "layer": 1,
+      "ours_count": 1298,
+      "golden_count": 1298,
+      "datapath_diff": 0,
+      "verdict": "PASS",
+      "only_in_ours": [],
+      "only_in_golden": [],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 2
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 288,
+          "DataLoader.line_buffer_idx=1": 288
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 144,
+          "WeightLoader.acc_reg_comp_idx=0": 288,
+          "WeightLoader.line_buffer_idx=0": 288,
+          "WeightLoader.is_new=1": 432,
+          "WeightLoader.line_buffer_idx=1": 288,
+          "WeightLoader.acc_reg_comp_idx=1": 288
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 72,
+          "DataStorer.pooling_out_new=0": 144,
+          "DataStorer.reg_out_idx=1": 72
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 2
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 288,
+          "DataLoader.line_buffer_idx=1": 288
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=1": 144,
+          "WeightLoader.acc_reg_comp_idx=0": 288,
+          "WeightLoader.line_buffer_idx=0": 288,
+          "WeightLoader.is_new=0": 432,
+          "WeightLoader.line_buffer_idx=1": 288,
+          "WeightLoader.acc_reg_comp_idx=1": 288
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 72,
+          "DataStorer.pooling_out_new=0": 144,
+          "DataStorer.reg_out_idx=1": 72
+        }
+      }
+    },
+    {
+      "layer": 2,
+      "ours_count": 1298,
+      "golden_count": 1298,
+      "datapath_diff": 0,
+      "verdict": "PASS",
+      "only_in_ours": [],
+      "only_in_golden": [],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 2
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 288,
+          "DataLoader.line_buffer_idx=1": 288
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 144,
+          "WeightLoader.acc_reg_comp_idx=0": 288,
+          "WeightLoader.line_buffer_idx=0": 288,
+          "WeightLoader.is_new=1": 432,
+          "WeightLoader.line_buffer_idx=1": 288,
+          "WeightLoader.acc_reg_comp_idx=1": 288
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 72,
+          "DataStorer.pooling_out_new=0": 144,
+          "DataStorer.reg_out_idx=1": 72
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 2
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 288,
+          "DataLoader.line_buffer_idx=1": 288
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=1": 144,
+          "WeightLoader.acc_reg_comp_idx=0": 288,
+          "WeightLoader.line_buffer_idx=0": 288,
+          "WeightLoader.is_new=0": 432,
+          "WeightLoader.line_buffer_idx=1": 288,
+          "WeightLoader.acc_reg_comp_idx=1": 288
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 72,
+          "DataStorer.pooling_out_new=0": 144,
+          "DataStorer.reg_out_idx=1": 72
+        }
+      }
+    },
+    {
+      "layer": 3,
+      "ours_count": 505,
+      "golden_count": 505,
+      "datapath_diff": 0,
+      "verdict": "PASS",
+      "only_in_ours": [],
+      "only_in_golden": [],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 108,
+          "DataLoader.line_buffer_idx=1": 108
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 72,
+          "WeightLoader.acc_reg_comp_idx=0": 108,
+          "WeightLoader.line_buffer_idx=0": 108,
+          "WeightLoader.is_new=1": 144,
+          "WeightLoader.line_buffer_idx=1": 108,
+          "WeightLoader.acc_reg_comp_idx=1": 108
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 36,
+          "DataStorer.pooling_out_new=0": 72,
+          "DataStorer.reg_out_idx=1": 36
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 108,
+          "DataLoader.line_buffer_idx=1": 108
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=1": 72,
+          "WeightLoader.acc_reg_comp_idx=0": 108,
+          "WeightLoader.line_buffer_idx=0": 108,
+          "WeightLoader.is_new=0": 144,
+          "WeightLoader.line_buffer_idx=1": 108,
+          "WeightLoader.acc_reg_comp_idx=1": 108
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 36,
+          "DataStorer.pooling_out_new=0": 72,
+          "DataStorer.reg_out_idx=1": 36
+        }
+      }
+    },
+    {
+      "layer": 4,
+      "ours_count": 937,
+      "golden_count": 937,
+      "datapath_diff": 0,
+      "verdict": "PASS",
+      "only_in_ours": [],
+      "only_in_golden": [],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 216,
+          "DataLoader.line_buffer_idx=1": 216
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 72,
+          "WeightLoader.acc_reg_comp_idx=0": 216,
+          "WeightLoader.line_buffer_idx=0": 216,
+          "WeightLoader.is_new=1": 360,
+          "WeightLoader.line_buffer_idx=1": 216,
+          "WeightLoader.acc_reg_comp_idx=1": 216
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 36,
+          "DataStorer.pooling_out_new=1": 36,
+          "DataStorer.reg_out_idx=1": 36,
+          "DataStorer.pooling_out_new=0": 36
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 216,
+          "DataLoader.line_buffer_idx=1": 216
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=1": 72,
+          "WeightLoader.acc_reg_comp_idx=0": 216,
+          "WeightLoader.line_buffer_idx=0": 216,
+          "WeightLoader.is_new=0": 360,
+          "WeightLoader.line_buffer_idx=1": 216,
+          "WeightLoader.acc_reg_comp_idx=1": 216
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 36,
+          "DataStorer.pooling_out_new=1": 36,
+          "DataStorer.reg_out_idx=1": 36,
+          "DataStorer.pooling_out_new=0": 36
+        }
+      }
+    },
+    {
+      "layer": 5,
+      "ours_count": 253,
+      "golden_count": 253,
+      "datapath_diff": 0,
+      "verdict": "PASS",
+      "only_in_ours": [],
+      "only_in_golden": [],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 54,
+          "DataLoader.line_buffer_idx=1": 54
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 36,
+          "WeightLoader.acc_reg_comp_idx=0": 54,
+          "WeightLoader.line_buffer_idx=0": 54,
+          "WeightLoader.is_new=1": 72,
+          "WeightLoader.line_buffer_idx=1": 54,
+          "WeightLoader.acc_reg_comp_idx=1": 54
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 18,
+          "DataStorer.pooling_out_new=0": 36,
+          "DataStorer.reg_out_idx=1": 18
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 54,
+          "DataLoader.line_buffer_idx=1": 54
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=1": 36,
+          "WeightLoader.acc_reg_comp_idx=0": 54,
+          "WeightLoader.line_buffer_idx=0": 54,
+          "WeightLoader.is_new=0": 72,
+          "WeightLoader.line_buffer_idx=1": 54,
+          "WeightLoader.acc_reg_comp_idx=1": 54
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 18,
+          "DataStorer.pooling_out_new=0": 36,
+          "DataStorer.reg_out_idx=1": 18
+        }
+      }
+    },
+    {
+      "layer": 6,
+      "ours_count": 469,
+      "golden_count": 469,
+      "datapath_diff": 0,
+      "verdict": "PASS",
+      "only_in_ours": [],
+      "only_in_golden": [],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 108,
+          "DataLoader.line_buffer_idx=1": 108
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 36,
+          "WeightLoader.acc_reg_comp_idx=0": 108,
+          "WeightLoader.line_buffer_idx=0": 108,
+          "WeightLoader.is_new=1": 180,
+          "WeightLoader.line_buffer_idx=1": 108,
+          "WeightLoader.acc_reg_comp_idx=1": 108
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 18,
+          "DataStorer.pooling_out_new=1": 18,
+          "DataStorer.reg_out_idx=1": 18,
+          "DataStorer.pooling_out_new=0": 18
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 108,
+          "DataLoader.line_buffer_idx=1": 108
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=1": 36,
+          "WeightLoader.acc_reg_comp_idx=0": 108,
+          "WeightLoader.line_buffer_idx=0": 108,
+          "WeightLoader.is_new=0": 180,
+          "WeightLoader.line_buffer_idx=1": 108,
+          "WeightLoader.acc_reg_comp_idx=1": 108
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 18,
+          "DataStorer.pooling_out_new=1": 18,
+          "DataStorer.reg_out_idx=1": 18,
+          "DataStorer.pooling_out_new=0": 18
+        }
+      }
+    },
+    {
+      "layer": 7,
+      "ours_count": 254,
+      "golden_count": 254,
+      "datapath_diff": 0,
+      "verdict": "PASS",
+      "only_in_ours": [],
+      "only_in_golden": [],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 2
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 54,
+          "DataLoader.line_buffer_idx=1": 54
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 36,
+          "WeightLoader.acc_reg_comp_idx=0": 54,
+          "WeightLoader.line_buffer_idx=0": 54,
+          "WeightLoader.is_new=1": 72,
+          "WeightLoader.line_buffer_idx=1": 54,
+          "WeightLoader.acc_reg_comp_idx=1": 54
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 18,
+          "DataStorer.pooling_out_new=0": 36,
+          "DataStorer.reg_out_idx=1": 18
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1,
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 54,
+          "DataLoader.line_buffer_idx=1": 54
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=1": 36,
+          "WeightLoader.acc_reg_comp_idx=0": 54,
+          "WeightLoader.line_buffer_idx=0": 54,
+          "WeightLoader.is_new=0": 72,
+          "WeightLoader.line_buffer_idx=1": 54,
+          "WeightLoader.acc_reg_comp_idx=1": 54
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 18,
+          "DataStorer.pooling_out_new=0": 36,
+          "DataStorer.reg_out_idx=1": 18
+        }
+      }
+    },
+    {
+      "layer": 8,
+      "ours_count": 470,
+      "golden_count": 470,
+      "datapath_diff": 0,
+      "verdict": "PASS",
+      "only_in_ours": [],
+      "only_in_golden": [],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 2
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 108,
+          "DataLoader.line_buffer_idx=1": 108
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 36,
+          "WeightLoader.acc_reg_comp_idx=0": 108,
+          "WeightLoader.line_buffer_idx=0": 108,
+          "WeightLoader.is_new=1": 180,
+          "WeightLoader.line_buffer_idx=1": 108,
+          "WeightLoader.acc_reg_comp_idx=1": 108
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 18,
+          "DataStorer.pooling_out_new=1": 18,
+          "DataStorer.reg_out_idx=1": 18,
+          "DataStorer.pooling_out_new=0": 18
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1,
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 108,
+          "DataLoader.line_buffer_idx=1": 108
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=1": 36,
+          "WeightLoader.acc_reg_comp_idx=0": 108,
+          "WeightLoader.line_buffer_idx=0": 108,
+          "WeightLoader.is_new=0": 180,
+          "WeightLoader.line_buffer_idx=1": 108,
+          "WeightLoader.acc_reg_comp_idx=1": 108
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 18,
+          "DataStorer.pooling_out_new=1": 18,
+          "DataStorer.reg_out_idx=1": 18,
+          "DataStorer.pooling_out_new=0": 18
+        }
+      }
+    },
+    {
+      "layer": 9,
+      "ours_count": 236,
+      "golden_count": 236,
+      "datapath_diff": 0,
+      "verdict": "PASS",
+      "only_in_ours": [],
+      "only_in_golden": [],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 2
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 54,
+          "DataLoader.line_buffer_idx=1": 54
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 18,
+          "WeightLoader.acc_reg_comp_idx=1": 54,
+          "WeightLoader.line_buffer_idx=0": 54,
+          "WeightLoader.is_new=1": 90,
+          "WeightLoader.line_buffer_idx=1": 54,
+          "WeightLoader.acc_reg_comp_idx=0": 54
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=1": 9,
+          "DataStorer.pooling_out_new=0": 18,
+          "DataStorer.reg_out_idx=0": 9
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1,
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 54,
+          "DataLoader.line_buffer_idx=1": 54
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=1": 18,
+          "WeightLoader.acc_reg_comp_idx=1": 54,
+          "WeightLoader.line_buffer_idx=0": 54,
+          "WeightLoader.is_new=0": 90,
+          "WeightLoader.line_buffer_idx=1": 54,
+          "WeightLoader.acc_reg_comp_idx=0": 54
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=1": 9,
+          "DataStorer.pooling_out_new=0": 18,
+          "DataStorer.reg_out_idx=0": 9
+        }
+      }
+    },
+    {
+      "layer": 10,
+      "ours_count": 512,
+      "golden_count": 512,
+      "datapath_diff": 0,
+      "verdict": "PASS",
+      "only_in_ours": [],
+      "only_in_golden": [],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 8
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 108,
+          "DataLoader.line_buffer_idx=1": 108
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 72,
+          "WeightLoader.acc_reg_comp_idx=1": 108,
+          "WeightLoader.line_buffer_idx=0": 108,
+          "WeightLoader.is_new=1": 144,
+          "WeightLoader.line_buffer_idx=1": 108,
+          "WeightLoader.acc_reg_comp_idx=0": 108
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=1": 36,
+          "DataStorer.pooling_out_new=0": 72,
+          "DataStorer.reg_out_idx=0": 36
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 4,
+          "QuantLoader.quant_reg_load_idx=1": 4
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 108,
+          "DataLoader.line_buffer_idx=1": 108
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=1": 72,
+          "WeightLoader.acc_reg_comp_idx=1": 108,
+          "WeightLoader.line_buffer_idx=0": 108,
+          "WeightLoader.is_new=0": 144,
+          "WeightLoader.line_buffer_idx=1": 108,
+          "WeightLoader.acc_reg_comp_idx=0": 108
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=1": 36,
+          "DataStorer.pooling_out_new=0": 72,
+          "DataStorer.reg_out_idx=0": 36
+        }
+      }
+    },
+    {
+      "layer": 11,
+      "ours_count": 972,
+      "golden_count": 972,
+      "datapath_diff": 0,
+      "verdict": "PASS",
+      "only_in_ours": [],
+      "only_in_golden": [],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 2
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 240,
+          "DataLoader.line_buffer_idx=1": 240
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 10,
+          "WeightLoader.acc_reg_comp_idx=0": 240,
+          "WeightLoader.line_buffer_idx=0": 240,
+          "WeightLoader.is_new=1": 470,
+          "WeightLoader.line_buffer_idx=1": 240,
+          "WeightLoader.acc_reg_comp_idx=1": 240
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 5,
+          "DataStorer.pooling_out_new=0": 10,
+          "DataStorer.reg_out_idx=1": 5
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1,
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 240,
+          "DataLoader.line_buffer_idx=1": 240
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=1": 10,
+          "WeightLoader.acc_reg_comp_idx=0": 240,
+          "WeightLoader.line_buffer_idx=0": 240,
+          "WeightLoader.is_new=0": 470,
+          "WeightLoader.line_buffer_idx=1": 240,
+          "WeightLoader.acc_reg_comp_idx=1": 240
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 5,
+          "DataStorer.pooling_out_new=0": 10,
+          "DataStorer.reg_out_idx=1": 5
+        }
+      }
+    },
+    {
+      "layer": 12,
+      "ours_count": 254,
+      "golden_count": 254,
+      "datapath_diff": 0,
+      "verdict": "PASS",
+      "only_in_ours": [],
+      "only_in_golden": [],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 2
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 54,
+          "DataLoader.line_buffer_idx=1": 54
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 36,
+          "WeightLoader.acc_reg_comp_idx=0": 54,
+          "WeightLoader.line_buffer_idx=0": 54,
+          "WeightLoader.is_new=1": 72,
+          "WeightLoader.line_buffer_idx=1": 54,
+          "WeightLoader.acc_reg_comp_idx=1": 54
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 18,
+          "DataStorer.pooling_out_new=0": 36,
+          "DataStorer.reg_out_idx=1": 18
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1,
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 54,
+          "DataLoader.line_buffer_idx=1": 54
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=1": 36,
+          "WeightLoader.acc_reg_comp_idx=0": 54,
+          "WeightLoader.line_buffer_idx=0": 54,
+          "WeightLoader.is_new=0": 72,
+          "WeightLoader.line_buffer_idx=1": 54,
+          "WeightLoader.acc_reg_comp_idx=1": 54
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 18,
+          "DataStorer.pooling_out_new=0": 36,
+          "DataStorer.reg_out_idx=1": 18
+        }
+      }
+    },
+    {
+      "layer": 13,
+      "ours_count": 901,
+      "golden_count": 901,
+      "datapath_diff": 0,
+      "verdict": "PASS",
+      "only_in_ours": [],
+      "only_in_golden": [],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 216,
+          "DataLoader.line_buffer_idx=1": 216
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 36,
+          "WeightLoader.acc_reg_comp_idx=0": 216,
+          "WeightLoader.line_buffer_idx=0": 216,
+          "WeightLoader.is_new=1": 396,
+          "WeightLoader.line_buffer_idx=1": 216,
+          "WeightLoader.acc_reg_comp_idx=1": 216
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 18,
+          "DataStorer.pooling_out_new=0": 36,
+          "DataStorer.reg_out_idx=1": 18
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 216,
+          "DataLoader.line_buffer_idx=1": 216
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=1": 36,
+          "WeightLoader.acc_reg_comp_idx=0": 216,
+          "WeightLoader.line_buffer_idx=0": 216,
+          "WeightLoader.is_new=0": 396,
+          "WeightLoader.line_buffer_idx=1": 216,
+          "WeightLoader.acc_reg_comp_idx=1": 216
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 18,
+          "DataStorer.pooling_out_new=0": 36,
+          "DataStorer.reg_out_idx=1": 18
+        }
+      }
+    },
+    {
+      "layer": 14,
+      "ours_count": 938,
+      "golden_count": 938,
+      "datapath_diff": 0,
+      "verdict": "PASS",
+      "only_in_ours": [],
+      "only_in_golden": [],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1,
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 216,
+          "DataLoader.line_buffer_idx=1": 216
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 72,
+          "WeightLoader.acc_reg_comp_idx=0": 216,
+          "WeightLoader.line_buffer_idx=0": 216,
+          "WeightLoader.is_new=1": 360,
+          "WeightLoader.line_buffer_idx=1": 216,
+          "WeightLoader.acc_reg_comp_idx=1": 216
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 36,
+          "DataStorer.pooling_out_new=0": 72,
+          "DataStorer.reg_out_idx=1": 36
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1,
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 216,
+          "DataLoader.line_buffer_idx=1": 216
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=1": 72,
+          "WeightLoader.acc_reg_comp_idx=0": 216,
+          "WeightLoader.line_buffer_idx=0": 216,
+          "WeightLoader.is_new=0": 360,
+          "WeightLoader.line_buffer_idx=1": 216,
+          "WeightLoader.acc_reg_comp_idx=1": 216
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 36,
+          "DataStorer.pooling_out_new=0": 72,
+          "DataStorer.reg_out_idx=1": 36
+        }
+      }
+    },
+    {
+      "layer": 15,
+      "ours_count": 1801,
+      "golden_count": 1801,
+      "datapath_diff": 0,
+      "verdict": "PASS",
+      "only_in_ours": [],
+      "only_in_golden": [],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 432,
+          "DataLoader.line_buffer_idx=1": 432
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 72,
+          "WeightLoader.acc_reg_comp_idx=0": 432,
+          "WeightLoader.line_buffer_idx=0": 432,
+          "WeightLoader.is_new=1": 792,
+          "WeightLoader.line_buffer_idx=1": 432,
+          "WeightLoader.acc_reg_comp_idx=1": 432
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 36,
+          "DataStorer.pooling_out_new=0": 72,
+          "DataStorer.reg_out_idx=1": 36
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 432,
+          "DataLoader.line_buffer_idx=1": 432
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=1": 72,
+          "WeightLoader.acc_reg_comp_idx=0": 432,
+          "WeightLoader.line_buffer_idx=0": 432,
+          "WeightLoader.is_new=0": 792,
+          "WeightLoader.line_buffer_idx=1": 432,
+          "WeightLoader.acc_reg_comp_idx=1": 432
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 36,
+          "DataStorer.pooling_out_new=0": 72,
+          "DataStorer.reg_out_idx=1": 36
+        }
+      }
+    },
+    {
+      "layer": 16,
+      "ours_count": 1874,
+      "golden_count": 1874,
+      "datapath_diff": 0,
+      "verdict": "PASS",
+      "only_in_ours": [],
+      "only_in_golden": [],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1,
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 432,
+          "DataLoader.line_buffer_idx=1": 432
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 144,
+          "WeightLoader.acc_reg_comp_idx=0": 432,
+          "WeightLoader.line_buffer_idx=0": 432,
+          "WeightLoader.is_new=1": 720,
+          "WeightLoader.line_buffer_idx=1": 432,
+          "WeightLoader.acc_reg_comp_idx=1": 432
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 72,
+          "DataStorer.pooling_out_new=0": 144,
+          "DataStorer.reg_out_idx=1": 72
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1,
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 432,
+          "DataLoader.line_buffer_idx=1": 432
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=1": 144,
+          "WeightLoader.acc_reg_comp_idx=0": 432,
+          "WeightLoader.line_buffer_idx=0": 432,
+          "WeightLoader.is_new=0": 720,
+          "WeightLoader.line_buffer_idx=1": 432,
+          "WeightLoader.acc_reg_comp_idx=1": 432
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 72,
+          "DataStorer.pooling_out_new=0": 144,
+          "DataStorer.reg_out_idx=1": 72
+        }
+      }
+    },
+    {
+      "layer": 17,
+      "ours_count": 2450,
+      "golden_count": 2450,
+      "datapath_diff": 0,
+      "verdict": "PASS",
+      "only_in_ours": [],
+      "only_in_golden": [],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 2
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 576,
+          "DataLoader.line_buffer_idx=1": 576
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 144,
+          "WeightLoader.acc_reg_comp_idx=0": 576,
+          "WeightLoader.line_buffer_idx=0": 576,
+          "WeightLoader.is_new=1": 1008,
+          "WeightLoader.line_buffer_idx=1": 576,
+          "WeightLoader.acc_reg_comp_idx=1": 576
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 72,
+          "DataStorer.pooling_out_new=0": 144,
+          "DataStorer.reg_out_idx=1": 72
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 2
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 576,
+          "DataLoader.line_buffer_idx=1": 576
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=1": 144,
+          "WeightLoader.acc_reg_comp_idx=0": 576,
+          "WeightLoader.line_buffer_idx=0": 576,
+          "WeightLoader.is_new=0": 1008,
+          "WeightLoader.line_buffer_idx=1": 576,
+          "WeightLoader.acc_reg_comp_idx=1": 576
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 72,
+          "DataStorer.pooling_out_new=0": 144,
+          "DataStorer.reg_out_idx=1": 72
+        }
+      }
+    },
+    {
+      "layer": 18,
+      "ours_count": 1299,
+      "golden_count": 1299,
+      "datapath_diff": 0,
+      "verdict": "PASS",
+      "only_in_ours": [],
+      "only_in_golden": [],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 2
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 288,
+          "DataLoader.line_buffer_idx=1": 288
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 144,
+          "WeightLoader.acc_reg_comp_idx=0": 288,
+          "WeightLoader.line_buffer_idx=0": 288,
+          "WeightLoader.is_new=1": 432,
+          "WeightLoader.line_buffer_idx=1": 288,
+          "WeightLoader.acc_reg_comp_idx=1": 288
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 72,
+          "DataStorer.pooling_out_new=0": 144,
+          "DataStorer.reg_out_idx=1": 72
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 2
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 288,
+          "DataLoader.line_buffer_idx=1": 288
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=1": 144,
+          "WeightLoader.acc_reg_comp_idx=0": 288,
+          "WeightLoader.line_buffer_idx=0": 288,
+          "WeightLoader.is_new=0": 432,
+          "WeightLoader.line_buffer_idx=1": 288,
+          "WeightLoader.acc_reg_comp_idx=1": 288
+        },
+        "DataStorer": {
+          "DataStorer.reg_out_idx=0": 72,
+          "DataStorer.pooling_out_new=0": 144,
+          "DataStorer.reg_out_idx=1": 72
+        }
+      }
+    }
+  ],
+  "scheduling_state_skipped": {
+    "WeightLoader": [
+      "acc_reg_comp_idx",
+      "is_new",
+      "line_buffer_idx"
+    ],
+    "QuantLoader": [
+      "quant_reg_load_idx"
+    ],
+    "DataStorer": [
+      "pooling_out_new",
+      "reg_out_idx"
+    ],
+    "DataLoader": [
+      "line_buffer_idx"
+    ],
+    "OffsetLoader": [
+      "offset_reg_idx"
+    ]
+  },
+  "universal_skip": [
+    "code_num",
+    "dependency",
+    "dest",
+    "is_compression",
+    "is_offset",
+    "is_skip",
+    "layer_idx",
+    "offchip_read_mode",
+    "quant_config_idx",
+    "src1",
+    "src2",
+    "src3",
+    "src4"
+  ]
+}

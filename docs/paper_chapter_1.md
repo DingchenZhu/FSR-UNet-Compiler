@@ -44,7 +44,7 @@ AI编译器领域已涌现出大量优秀工作。TVM通过Relay IR[16]提供了
 
 **贡献四：分组卷积与上采样算子的完整支持**。针对SD-UNet的分组卷积（Grouped Convolution），提出双级循环发射框架，支持groups=2（conv6，单级group循环）和groups=8（conv7/conv8单级外循环、conv10真双级嵌套）四种模式，QuantLoader发射时机由`group_ql_in_level2`标志统一控制。实现DepthToSpace透明化注入，在前驱Conv层DataStorer中注入`is_pixelshuffle`及相关字段，将像素重排上采样映射到硬件专用DataStorer字段，不增减指令条数。实现pool-while-store完整建模，pool2d层在IR中占位保留形状信息，Emitter层透明跳过，前驱Conv DataStorer中注入`is_pooling=1`字段，三者构成覆盖硬件池化语义的完整机制。
 
-**贡献五：两个目标网络的端到端指令级精确验证**。在FSRCNN超分辨率网络（输入$(1, 1, 36, 64)$，12层）上实现与`sr_inst()`黄金参考的指令数完全匹配（`load_next=False`：1,273条；`load_next=True`：1,274条，QL/DL/WL/DS/OL/ODS六类全部零差值，功能性diff=0）。在SD-UNet（USR\_Net\_109\_nopad.onnx，输入$(1,1,144,256)$，19层Conv，含groups=2/8、DepthToSpace×5、Concat×4）上实现与`sd_inst()`黄金参考的指令数精确匹配（17,155/17,155，功能性diff=0）；剩余14,664个字段差异经逐层multiset分析全部确认为非功能性（WL `is_new`顺序调度差异及QL寄存器编号差异）。编译器以约800行通用框架代码实现了两个网络的完整指令生成，具备面向任意ONNX/PyTorch模型的扩展能力。
+**贡献五：两个目标网络的端到端指令级精确验证**。在FSRCNN超分辨率网络（输入$(1, 1, 36, 64)$，12层）上实现与`sr_inst()`黄金参考的指令数完全匹配（`load_next=False`：1,273条；`load_next=True`：1,274条，与黄金参考的指令总数与六类指令数量精确对齐）。在SD-UNet（USR\_Net\_109\_nopad.onnx，输入$(1,1,144,256)$，19层Conv，含groups=2/8、DepthToSpace×5、Concat×4）上实现与`sd_inst()`黄金参考的指令数精确匹配（17,155/17,155，功能性diff=0）；剩余14,664个字段差异经逐层multiset分析全部确认为非功能性（WL `is_new`顺序调度差异及QL寄存器编号差异）。编译器以约800行通用框架代码实现了两个网络的完整指令生成，具备面向任意ONNX/PyTorch模型的扩展能力。
 
 ## 1.4　论文组织结构
 

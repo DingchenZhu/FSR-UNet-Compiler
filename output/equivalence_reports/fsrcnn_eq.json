@@ -1,0 +1,1944 @@
+{
+  "ours_path": "output/fsrcnn/pseudo_instructions.txt",
+  "golden_path": "/home/hansz/scratch-data/design/tvm-tiling/references/sr_inst_golden.txt",
+  "layers_checked": 12,
+  "layers_pass": 1,
+  "layers_fail": 11,
+  "total_datapath_diff": 1410,
+  "overall_verdict": "DATAPATH_DIVERGENT",
+  "per_layer": [
+    {
+      "layer": 0,
+      "ours_count": 97,
+      "golden_count": 97,
+      "datapath_diff": 0,
+      "verdict": "PASS",
+      "only_in_ours": [],
+      "only_in_golden": [],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 16,
+          "DataLoader.line_buffer_idx=1": 16
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 32,
+          "WeightLoader.acc_reg_comp_idx=0": 16,
+          "WeightLoader.line_buffer_idx=0": 16,
+          "WeightLoader.acc_reg_comp_idx=1": 16,
+          "WeightLoader.line_buffer_idx=1": 16
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 32,
+          "DataStorer.reg_out_idx=0": 16,
+          "DataStorer.reg_out_idx=1": 16
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 16,
+          "DataLoader.line_buffer_idx=1": 16
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 32,
+          "WeightLoader.acc_reg_comp_idx=0": 16,
+          "WeightLoader.line_buffer_idx=0": 16,
+          "WeightLoader.acc_reg_comp_idx=1": 16,
+          "WeightLoader.line_buffer_idx=1": 16
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 32,
+          "DataStorer.reg_out_idx=0": 16,
+          "DataStorer.reg_out_idx=1": 16
+        }
+      }
+    },
+    {
+      "layer": 1,
+      "ours_count": 137,
+      "golden_count": 137,
+      "datapath_diff": 208,
+      "verdict": "FAIL",
+      "only_in_ours": [
+        {
+          "count": 8,
+          "inst": {
+            "bas_addr": 1161,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 0,
+            "kernal_size": 1,
+            "line_buffer_row_shift": 0,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 4,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 8,
+          "inst": {
+            "bas_addr": 1165,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 0,
+            "kernal_size": 1,
+            "line_buffer_row_shift": 0,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 4,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 8,
+          "inst": {
+            "bas_addr": 1169,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 0,
+            "kernal_size": 1,
+            "line_buffer_row_shift": 0,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 4,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 8,
+          "inst": {
+            "bas_addr": 1173,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 0,
+            "kernal_size": 1,
+            "line_buffer_row_shift": 0,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 4,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 8,
+          "inst": {
+            "bas_addr": 1177,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 0,
+            "kernal_size": 1,
+            "line_buffer_row_shift": 0,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 4,
+            "weight_parall_mode": 0
+          }
+        }
+      ],
+      "only_in_golden": [
+        {
+          "count": 8,
+          "inst": {
+            "bas_addr": 1737,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 0,
+            "kernal_size": 1,
+            "line_buffer_row_shift": 0,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 4,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 8,
+          "inst": {
+            "bas_addr": 1741,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 0,
+            "kernal_size": 1,
+            "line_buffer_row_shift": 0,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 4,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 8,
+          "inst": {
+            "bas_addr": 1745,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 0,
+            "kernal_size": 1,
+            "line_buffer_row_shift": 0,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 4,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 8,
+          "inst": {
+            "bas_addr": 1749,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 0,
+            "kernal_size": 1,
+            "line_buffer_row_shift": 0,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 4,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 8,
+          "inst": {
+            "bas_addr": 1753,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 0,
+            "kernal_size": 1,
+            "line_buffer_row_shift": 0,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 4,
+            "weight_parall_mode": 0
+          }
+        }
+      ],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 32,
+          "DataLoader.line_buffer_idx=1": 32
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 8,
+          "WeightLoader.acc_reg_comp_idx=0": 32,
+          "WeightLoader.line_buffer_idx=0": 32,
+          "WeightLoader.is_new=1": 56,
+          "WeightLoader.line_buffer_idx=1": 32,
+          "WeightLoader.acc_reg_comp_idx=1": 32
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 8,
+          "DataStorer.reg_out_idx=0": 4,
+          "DataStorer.reg_out_idx=1": 4
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 32,
+          "DataLoader.line_buffer_idx=1": 32
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 8,
+          "WeightLoader.acc_reg_comp_idx=0": 32,
+          "WeightLoader.line_buffer_idx=0": 32,
+          "WeightLoader.is_new=1": 56,
+          "WeightLoader.line_buffer_idx=1": 32,
+          "WeightLoader.acc_reg_comp_idx=1": 32
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 8,
+          "DataStorer.reg_out_idx=0": 4,
+          "DataStorer.reg_out_idx=1": 4
+        }
+      }
+    },
+    {
+      "layer": 2,
+      "ours_count": 9,
+      "golden_count": 9,
+      "datapath_diff": 6,
+      "verdict": "FAIL",
+      "only_in_ours": [
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 0,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        },
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 24,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        },
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 48,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        }
+      ],
+      "only_in_golden": [
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 792,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        },
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 816,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        },
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 840,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        }
+      ],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 2,
+          "DataLoader.line_buffer_idx=1": 1
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 1,
+          "WeightLoader.acc_reg_comp_idx=0": 3,
+          "WeightLoader.line_buffer_idx=0": 2,
+          "WeightLoader.is_new=1": 2,
+          "WeightLoader.line_buffer_idx=1": 1
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 1,
+          "DataStorer.reg_out_idx=0": 1
+        },
+        "OffsetLoader": {
+          "OffsetLoader.offset_reg_idx=0": 1
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 2,
+          "DataLoader.line_buffer_idx=1": 1
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 1,
+          "WeightLoader.acc_reg_comp_idx=0": 3,
+          "WeightLoader.line_buffer_idx=0": 2,
+          "WeightLoader.is_new=1": 2,
+          "WeightLoader.line_buffer_idx=1": 1
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 1,
+          "DataStorer.reg_out_idx=0": 1
+        },
+        "OffsetLoader": {
+          "OffsetLoader.offset_reg_idx=0": 1
+        }
+      }
+    },
+    {
+      "layer": 3,
+      "ours_count": 128,
+      "golden_count": 128,
+      "datapath_diff": 110,
+      "verdict": "FAIL",
+      "only_in_ours": [
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1193,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1205,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1217,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 1,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1229,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 1,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1241,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        }
+      ],
+      "only_in_golden": [
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1769,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1781,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1793,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 1,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1805,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 1,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1817,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        }
+      ],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=1": 24,
+          "DataLoader.line_buffer_idx=0": 24
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 8,
+          "WeightLoader.acc_reg_comp_idx=1": 24,
+          "WeightLoader.line_buffer_idx=1": 24,
+          "WeightLoader.is_new=1": 40,
+          "WeightLoader.line_buffer_idx=0": 24,
+          "WeightLoader.acc_reg_comp_idx=0": 24
+        },
+        "OffsetLoader": {
+          "OffsetLoader.offset_reg_idx=1": 12,
+          "OffsetLoader.offset_reg_idx=0": 11
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 8,
+          "DataStorer.reg_out_idx=1": 4,
+          "DataStorer.reg_out_idx=0": 4
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=1": 24,
+          "DataLoader.line_buffer_idx=0": 24
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 8,
+          "WeightLoader.acc_reg_comp_idx=1": 24,
+          "WeightLoader.line_buffer_idx=1": 24,
+          "WeightLoader.is_new=1": 40,
+          "WeightLoader.line_buffer_idx=0": 24,
+          "WeightLoader.acc_reg_comp_idx=0": 24
+        },
+        "OffsetLoader": {
+          "OffsetLoader.offset_reg_idx=1": 12,
+          "OffsetLoader.offset_reg_idx=0": 11
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 8,
+          "DataStorer.reg_out_idx=1": 4,
+          "DataStorer.reg_out_idx=0": 4
+        }
+      }
+    },
+    {
+      "layer": 4,
+      "ours_count": 9,
+      "golden_count": 9,
+      "datapath_diff": 6,
+      "verdict": "FAIL",
+      "only_in_ours": [
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 72,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        },
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 96,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        },
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 120,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        }
+      ],
+      "only_in_golden": [
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 864,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        },
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 888,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        },
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 912,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        }
+      ],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=1": 2,
+          "DataLoader.line_buffer_idx=0": 1
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 1,
+          "WeightLoader.acc_reg_comp_idx=1": 3,
+          "WeightLoader.line_buffer_idx=1": 2,
+          "WeightLoader.is_new=1": 2,
+          "WeightLoader.line_buffer_idx=0": 1
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 1,
+          "DataStorer.reg_out_idx=1": 1
+        },
+        "OffsetLoader": {
+          "OffsetLoader.offset_reg_idx=0": 1
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=1": 2,
+          "DataLoader.line_buffer_idx=0": 1
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 1,
+          "WeightLoader.acc_reg_comp_idx=1": 3,
+          "WeightLoader.line_buffer_idx=1": 2,
+          "WeightLoader.is_new=1": 2,
+          "WeightLoader.line_buffer_idx=0": 1
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 1,
+          "DataStorer.reg_out_idx=1": 1
+        },
+        "OffsetLoader": {
+          "OffsetLoader.offset_reg_idx=0": 1
+        }
+      }
+    },
+    {
+      "layer": 5,
+      "ours_count": 128,
+      "golden_count": 128,
+      "datapath_diff": 110,
+      "verdict": "FAIL",
+      "only_in_ours": [
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1265,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1277,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1289,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 1,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1301,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 1,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1313,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        }
+      ],
+      "only_in_golden": [
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1841,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1853,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1865,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 1,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1877,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 1,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1889,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        }
+      ],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 24,
+          "DataLoader.line_buffer_idx=1": 24
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 8,
+          "WeightLoader.acc_reg_comp_idx=0": 24,
+          "WeightLoader.line_buffer_idx=0": 24,
+          "WeightLoader.is_new=1": 40,
+          "WeightLoader.line_buffer_idx=1": 24,
+          "WeightLoader.acc_reg_comp_idx=1": 24
+        },
+        "OffsetLoader": {
+          "OffsetLoader.offset_reg_idx=1": 12,
+          "OffsetLoader.offset_reg_idx=0": 11
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 8,
+          "DataStorer.reg_out_idx=0": 4,
+          "DataStorer.reg_out_idx=1": 4
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 24,
+          "DataLoader.line_buffer_idx=1": 24
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 8,
+          "WeightLoader.acc_reg_comp_idx=0": 24,
+          "WeightLoader.line_buffer_idx=0": 24,
+          "WeightLoader.is_new=1": 40,
+          "WeightLoader.line_buffer_idx=1": 24,
+          "WeightLoader.acc_reg_comp_idx=1": 24
+        },
+        "OffsetLoader": {
+          "OffsetLoader.offset_reg_idx=1": 12,
+          "OffsetLoader.offset_reg_idx=0": 11
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 8,
+          "DataStorer.reg_out_idx=0": 4,
+          "DataStorer.reg_out_idx=1": 4
+        }
+      }
+    },
+    {
+      "layer": 6,
+      "ours_count": 9,
+      "golden_count": 9,
+      "datapath_diff": 6,
+      "verdict": "FAIL",
+      "only_in_ours": [
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 144,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        },
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 168,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        },
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 192,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        }
+      ],
+      "only_in_golden": [
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 936,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        },
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 960,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        },
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 984,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        }
+      ],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 2,
+          "DataLoader.line_buffer_idx=1": 1
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 1,
+          "WeightLoader.acc_reg_comp_idx=0": 3,
+          "WeightLoader.line_buffer_idx=0": 2,
+          "WeightLoader.is_new=1": 2,
+          "WeightLoader.line_buffer_idx=1": 1
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 1,
+          "DataStorer.reg_out_idx=0": 1
+        },
+        "OffsetLoader": {
+          "OffsetLoader.offset_reg_idx=0": 1
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 2,
+          "DataLoader.line_buffer_idx=1": 1
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 1,
+          "WeightLoader.acc_reg_comp_idx=0": 3,
+          "WeightLoader.line_buffer_idx=0": 2,
+          "WeightLoader.is_new=1": 2,
+          "WeightLoader.line_buffer_idx=1": 1
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 1,
+          "DataStorer.reg_out_idx=0": 1
+        },
+        "OffsetLoader": {
+          "OffsetLoader.offset_reg_idx=0": 1
+        }
+      }
+    },
+    {
+      "layer": 7,
+      "ours_count": 128,
+      "golden_count": 128,
+      "datapath_diff": 110,
+      "verdict": "FAIL",
+      "only_in_ours": [
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1337,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1349,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1361,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 1,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1373,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 1,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1385,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        }
+      ],
+      "only_in_golden": [
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1913,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1925,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1937,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 1,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1949,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 1,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1961,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        }
+      ],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=1": 24,
+          "DataLoader.line_buffer_idx=0": 24
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 8,
+          "WeightLoader.acc_reg_comp_idx=1": 24,
+          "WeightLoader.line_buffer_idx=1": 24,
+          "WeightLoader.is_new=1": 40,
+          "WeightLoader.line_buffer_idx=0": 24,
+          "WeightLoader.acc_reg_comp_idx=0": 24
+        },
+        "OffsetLoader": {
+          "OffsetLoader.offset_reg_idx=1": 12,
+          "OffsetLoader.offset_reg_idx=0": 11
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 8,
+          "DataStorer.reg_out_idx=1": 4,
+          "DataStorer.reg_out_idx=0": 4
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=1": 24,
+          "DataLoader.line_buffer_idx=0": 24
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 8,
+          "WeightLoader.acc_reg_comp_idx=1": 24,
+          "WeightLoader.line_buffer_idx=1": 24,
+          "WeightLoader.is_new=1": 40,
+          "WeightLoader.line_buffer_idx=0": 24,
+          "WeightLoader.acc_reg_comp_idx=0": 24
+        },
+        "OffsetLoader": {
+          "OffsetLoader.offset_reg_idx=1": 12,
+          "OffsetLoader.offset_reg_idx=0": 11
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 8,
+          "DataStorer.reg_out_idx=1": 4,
+          "DataStorer.reg_out_idx=0": 4
+        }
+      }
+    },
+    {
+      "layer": 8,
+      "ours_count": 9,
+      "golden_count": 9,
+      "datapath_diff": 6,
+      "verdict": "FAIL",
+      "only_in_ours": [
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 216,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        },
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 240,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        },
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 264,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        }
+      ],
+      "only_in_golden": [
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 1008,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        },
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 1032,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        },
+        {
+          "count": 1,
+          "inst": {
+            "bas_addr": 1056,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 5,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 3,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 24,
+            "weight_parall_mode": 1
+          }
+        }
+      ],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=1": 2,
+          "DataLoader.line_buffer_idx=0": 1
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 1,
+          "WeightLoader.acc_reg_comp_idx=1": 3,
+          "WeightLoader.line_buffer_idx=1": 2,
+          "WeightLoader.is_new=1": 2,
+          "WeightLoader.line_buffer_idx=0": 1
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 1,
+          "DataStorer.reg_out_idx=1": 1
+        },
+        "OffsetLoader": {
+          "OffsetLoader.offset_reg_idx=0": 1
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=1": 2,
+          "DataLoader.line_buffer_idx=0": 1
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 1,
+          "WeightLoader.acc_reg_comp_idx=1": 3,
+          "WeightLoader.line_buffer_idx=1": 2,
+          "WeightLoader.is_new=1": 2,
+          "WeightLoader.line_buffer_idx=0": 1
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 1,
+          "DataStorer.reg_out_idx=1": 1
+        },
+        "OffsetLoader": {
+          "OffsetLoader.offset_reg_idx=0": 1
+        }
+      }
+    },
+    {
+      "layer": 9,
+      "ours_count": 128,
+      "golden_count": 128,
+      "datapath_diff": 96,
+      "verdict": "FAIL",
+      "only_in_ours": [
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1409,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1421,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1433,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 1,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1445,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 1,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1457,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        }
+      ],
+      "only_in_golden": [
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1985,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 1997,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 2009,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 1,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 2021,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 1,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 4,
+          "inst": {
+            "bas_addr": 2033,
+            "is_bilinear_bicubic": 1,
+            "is_padding_col": 6,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 5,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 12,
+            "weight_parall_mode": 0
+          }
+        }
+      ],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 24,
+          "DataLoader.line_buffer_idx=1": 24
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 8,
+          "WeightLoader.acc_reg_comp_idx=0": 24,
+          "WeightLoader.line_buffer_idx=0": 24,
+          "WeightLoader.is_new=1": 40,
+          "WeightLoader.line_buffer_idx=1": 24,
+          "WeightLoader.acc_reg_comp_idx=1": 24
+        },
+        "OffsetLoader": {
+          "OffsetLoader.offset_reg_idx=1": 12,
+          "OffsetLoader.offset_reg_idx=0": 11
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 8,
+          "DataStorer.reg_out_idx=0": 4,
+          "DataStorer.reg_out_idx=1": 4
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 24,
+          "DataLoader.line_buffer_idx=1": 24
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 8,
+          "WeightLoader.acc_reg_comp_idx=0": 24,
+          "WeightLoader.line_buffer_idx=0": 24,
+          "WeightLoader.is_new=1": 40,
+          "WeightLoader.line_buffer_idx=1": 24,
+          "WeightLoader.acc_reg_comp_idx=1": 24
+        },
+        "OffsetLoader": {
+          "OffsetLoader.offset_reg_idx=1": 12,
+          "OffsetLoader.offset_reg_idx=0": 11
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 8,
+          "DataStorer.reg_out_idx=0": 4,
+          "DataStorer.reg_out_idx=1": 4
+        }
+      }
+    },
+    {
+      "layer": 10,
+      "ours_count": 97,
+      "golden_count": 97,
+      "datapath_diff": 64,
+      "verdict": "FAIL",
+      "only_in_ours": [
+        {
+          "count": 32,
+          "inst": {
+            "bas_addr": 1481,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 0,
+            "kernal_size": 1,
+            "line_buffer_row_shift": 4,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 8,
+            "weight_parall_mode": 2
+          }
+        }
+      ],
+      "only_in_golden": [
+        {
+          "count": 32,
+          "inst": {
+            "bas_addr": 1161,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 0,
+            "kernal_size": 1,
+            "line_buffer_row_shift": 4,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 8,
+            "weight_parall_mode": 2
+          }
+        }
+      ],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 16,
+          "DataLoader.line_buffer_idx=1": 16
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 32,
+          "WeightLoader.acc_reg_comp_idx=0": 16,
+          "WeightLoader.line_buffer_idx=0": 16,
+          "WeightLoader.acc_reg_comp_idx=1": 16,
+          "WeightLoader.line_buffer_idx=1": 16
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 32,
+          "DataStorer.reg_out_idx=0": 16,
+          "DataStorer.reg_out_idx=1": 16
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=0": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 16,
+          "DataLoader.line_buffer_idx=1": 16
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 32,
+          "WeightLoader.acc_reg_comp_idx=0": 16,
+          "WeightLoader.line_buffer_idx=0": 16,
+          "WeightLoader.acc_reg_comp_idx=1": 16,
+          "WeightLoader.line_buffer_idx=1": 16
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 32,
+          "DataStorer.reg_out_idx=0": 16,
+          "DataStorer.reg_out_idx=1": 16
+        }
+      }
+    },
+    {
+      "layer": 11,
+      "ours_count": 394,
+      "golden_count": 394,
+      "datapath_diff": 688,
+      "verdict": "FAIL",
+      "only_in_ours": [
+        {
+          "count": 8,
+          "inst": {
+            "bas_addr": 1489,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 3,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 2,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 6,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 8,
+          "inst": {
+            "bas_addr": 1495,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 3,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 2,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 6,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 8,
+          "inst": {
+            "bas_addr": 1501,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 3,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 2,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 6,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 8,
+          "inst": {
+            "bas_addr": 1507,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 3,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 2,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 6,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 8,
+          "inst": {
+            "bas_addr": 1513,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 3,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 2,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 6,
+            "weight_parall_mode": 0
+          }
+        }
+      ],
+      "only_in_golden": [
+        {
+          "count": 8,
+          "inst": {
+            "bas_addr": 2057,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 3,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 2,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 6,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 8,
+          "inst": {
+            "bas_addr": 2063,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 3,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 2,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 6,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 8,
+          "inst": {
+            "bas_addr": 2069,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 3,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 2,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 6,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 8,
+          "inst": {
+            "bas_addr": 2075,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 3,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 2,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 6,
+            "weight_parall_mode": 0
+          }
+        },
+        {
+          "count": 8,
+          "inst": {
+            "bas_addr": 2081,
+            "is_bilinear_bicubic": 0,
+            "is_padding_col": 3,
+            "kernal_size": 0,
+            "line_buffer_row_shift": 2,
+            "offset_reg_idx": 0,
+            "op_code": "WeightLoader",
+            "transnum": 6,
+            "weight_parall_mode": 0
+          }
+        }
+      ],
+      "scheduling_state_ours": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 96,
+          "DataLoader.line_buffer_idx=1": 96
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 8,
+          "WeightLoader.acc_reg_comp_idx=0": 96,
+          "WeightLoader.line_buffer_idx=0": 96,
+          "WeightLoader.is_new=1": 184,
+          "WeightLoader.line_buffer_idx=1": 96,
+          "WeightLoader.acc_reg_comp_idx=1": 96
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 8,
+          "DataStorer.reg_out_idx=0": 4,
+          "DataStorer.reg_out_idx=1": 4
+        }
+      },
+      "scheduling_state_golden": {
+        "QuantLoader": {
+          "QuantLoader.quant_reg_load_idx=1": 1
+        },
+        "DataLoader": {
+          "DataLoader.line_buffer_idx=0": 96,
+          "DataLoader.line_buffer_idx=1": 96
+        },
+        "WeightLoader": {
+          "WeightLoader.is_new=0": 8,
+          "WeightLoader.acc_reg_comp_idx=0": 96,
+          "WeightLoader.line_buffer_idx=0": 96,
+          "WeightLoader.is_new=1": 184,
+          "WeightLoader.line_buffer_idx=1": 96,
+          "WeightLoader.acc_reg_comp_idx=1": 96
+        },
+        "DataStorer": {
+          "DataStorer.pooling_out_new=0": 8,
+          "DataStorer.reg_out_idx=0": 4,
+          "DataStorer.reg_out_idx=1": 4
+        }
+      }
+    }
+  ],
+  "scheduling_state_skipped": {
+    "WeightLoader": [
+      "acc_reg_comp_idx",
+      "is_new",
+      "line_buffer_idx"
+    ],
+    "QuantLoader": [
+      "quant_reg_load_idx"
+    ],
+    "DataStorer": [
+      "pooling_out_new",
+      "reg_out_idx"
+    ],
+    "DataLoader": [
+      "line_buffer_idx"
+    ],
+    "OffsetLoader": [
+      "offset_reg_idx"
+    ]
+  },
+  "universal_skip": [
+    "code_num",
+    "dependency",
+    "dest",
+    "is_compression",
+    "is_offset",
+    "is_skip",
+    "layer_idx",
+    "offchip_read_mode",
+    "quant_config_idx",
+    "src1",
+    "src2",
+    "src3",
+    "src4"
+  ]
+}

@@ -4648,3 +4648,137 @@ if plan.ds_last_transfer_num is not None and load_idx == load_total - 1:
 - 跨层权重预取：compute-bound，收益 <0.1%，工程复杂度高
 - 交错调度：收益 <0.2%，实现复杂，上板前无必要
 - 全局 ILP tiling：单层搜索空间仅 360 种，枚举已足够，ILP 引入无收益
+
+
+---
+
+## Phase 34：Datapath 等价性检查器（2026-05-09）
+
+### 动机
+
+之前依赖两个间接证据来判定 ours == golden：
+1. layer_diff.py 的字段级 diff 数（17155/17155 指令完全对齐）
+2. 14,664 字段 diff 的**人工分类**为非功能性 ordering artifact
+
+存在两个问题：
+- 人工分类无独立验证，存在漏检风险
+- 二进制 ISA spec 暂未到位（4 个新字段位宽未知），无法做 bit-accurate verification
+
+需要一个**纯文本层面、形式化、自动化**的等价性判决器，且不依赖 ISA spec。
+
+### 实现：tools/equivalence_check.py
+
+**判决思路**：把每条指令的字段拆为三类：
+1. **UNIVERSAL_SKIP**：post-pass 元数据 + ISA-version placeholder
+   - `code_num, dependency, dest, src1..4, layer_idx, is_offset, quant_config_idx`
+   - `is_compression, offchip_read_mode, is_skip`（位宽待 ISA 确认，golden 中均为常量值）
+2. **SCHEDULING_STATE**：硬件资源选择字段（哪个累加器/line buffer/量化寄存器，是否 reset）
+   - `WL: is_new, acc_reg_comp_idx, line_buffer_idx`
+   - `QL: quant_reg_load_idx`
+   - `DS: reg_out_idx, pooling_out_new`
+   - `DL: line_buffer_idx`
+   - `OffsetLoader: offset_reg_idx`
+3. **DATAPATH**：剩余全部字段（地址、shape、transfer count、output mode 等）
+
+每层做 datapath 字段的 multiset 比较 → 输出 `DATAPATH_EQUIVALENT / DATAPATH_DIVERGENT` 二值判决。
+
+### 判决强度的边界（诚实标注）
+
+| 等价性等级 | 我们能证明？ | 备注 |
+|-----------|-----------|------|
+| Datapath EQ | **能**（本工具）| 加载/存储/MAC 配置的多重集相等 |
+| Scheduling EQ | 不能 | reset 时机等语义等价需 HW spec |
+| Bit-accurate EQ | 不能 | 输出 tensor 完全一致需 RTL co-sim 或上板 |
+
+### 验证结果
+
+**SD-UNet（USR_Net_109_nopad.onnx）**：
+```
+Layers checked:  19
+Layers PASS:     19
+Layers FAIL:     0
+Total datapath diff:  0
+OVERALL: DATAPATH EQUIVALENT  (PASS) ✅
+```
+
+**FSRCNN：DATAPATH_DIVERGENT（重要发现）**：
+```
+Layers PASS:     1 (L=0 only)
+Layers FAIL:     11
+Total datapath diff:  1410
+OVERALL: DATAPATH DIVERGENT  (FAIL)
+```
+
+**纠正之前 Memory 中的错误结论**：
+> Memory 旧记录：「FSRCNN 1273/1273 0 functional diff，2156 字段 diff = 旧 golden 无此字段（is_compression, offchip_read_mode, is_skip），非回归」
+
+经 datapath checker 验证：**这个结论是错的**。剔除 ISA-placeholder 字段后仍有 1410 个真实 datapath diff。
+
+**diff 分布（系统性 placement 偏移）**：
+
+| 层 | WL bas_addr 偏移 | 其他 op |
+|----|-----------------|---------|
+| L=0 | 0 | 全 0（PASS）|
+| L=1, 3, 5, 7, 9 | **−576**（固定）| DS.res / QL / OL = 0 |
+| L=2, 4, 6, 8 | **−792**（固定）| 全 0 |
+| L=10 | **+320** | 全 0 |
+| L=11 | **−568** | DataLoader 有连续偏移 -5~-9 |
+| L=1 额外 | DS.pool 连续偏移 -64~-67, DL 连续偏移 0~-6 | （未深查）|
+
+**初步推断**（**非定论，待上板或 host 验证**）：
+- 主导差异是 WL `bas_addr` 整层固定偏移 → ours 与 golden 选择了不同的权重 SRAM 基地址
+- FSRCNN 没有 OffchipDataLoader（权重为 init-once 由 host 写入）
+- 因此**只要硬件按 ours 的 placement 写入权重，runtime 行为可能等价**
+- L=1 的 DS.pool/DL 连续偏移可能是 placement 偏移的级联效应
+
+但这是**推断而非证明**——纯字段级 normalizer 无法证明 placement 偏移的功能等价性。
+
+### 工具产出
+
+- `tools/equivalence_check.py`：CLI + 可调用模块；支持 `--only-layer`、`--verbose`、`--output-json`
+- `tests/test_equivalence.py`：9 个 pytest（6 个 unit + 3 个 e2e），全部 PASS
+  - SD-UNet: `test_unet_datapath_equivalent` 断言 0 diff
+  - FSRCNN: `test_fsrcnn_known_placement_divergence` 把 1410 diff **pin 住**，作为已知 placement-only divergence 的 baseline；任何后续偏离会触发 FAIL，强制人工 review
+
+### 价值与边界
+
+**价值**：
+1. 把"output ≡ golden"从口头/手工判断升级为**可重跑的自动判决**
+2. 揭示了之前 memory 中 FSRCNN 0-functional-diff 结论的错误
+3. 上板前最强的纯软件证据
+4. pytest 提供持续回归保护
+
+**边界**：
+1. 不能证明 scheduling-state 字段差异的语义等价（需 HW spec）
+2. 不能证明 placement 偏移的功能等价（需 host 配套写入或上板验证）
+3. 不能证明 bit-accurate 输出 tensor 一致（需 RTL co-sim 或上板）
+
+### 后续 P1（待跟进）
+
+- **FSRCNN placement divergence 根因调查**：
+  - 是 addr_alloc 算法选择问题（可调整匹配 golden）
+  - 还是 host 端权重写入流程独立选择 placement（说明 ours 自由 placement 是允许的）
+  - 决定后修复或归档为已知设计差异
+- **L=1 连续偏移**（DS.pool -64~-67, DL 0~-6）：是否真为 placement 级联效应，待 trace
+- **上板时序 / RTL co-sim**：把 datapath EQ 升级为 bit-accurate EQ，需硬件团队配合
+
+### 运行命令
+
+```bash
+# 二者择一的 Python 环境（pytest 在 tvm-dev，运行在 hhb 都可）
+PYTHON=/home/hansz/scratch-data/tools/miniconda3/envs/hhb/bin/python
+PYTHONPATH=/home/hansz/scratch-data/design/tvm/python:/home/hansz/scratch-data/design/tvm-tiling:/home/scratch.hansz_coreai/design/tvm-design
+
+# SD-UNet 等价性检查（默认 path）
+$PYTHON tools/equivalence_check.py --output-json /tmp/unet_eq.json
+
+# FSRCNN 等价性检查
+$PYTHON tools/equivalence_check.py \
+  --ours output/fsrcnn/pseudo_instructions.txt \
+  --golden /home/hansz/scratch-data/design/tvm-tiling/references/sr_inst_golden.txt \
+  --verbose --output-json /tmp/fsrcnn_eq.json
+
+# pytest 回归（必须用 tvm-dev 环境）
+PYTHON_TEST=/home/hansz/scratch-data/tools/miniconda3/envs/tvm-dev/bin/python
+PYTHONPATH=$PYTHONPATH $PYTHON_TEST -m pytest tests/test_equivalence.py -v
+```

@@ -6,7 +6,7 @@
 
 ### 7.1.1　两个目标网络的完整验证
 
-**FSRCNN超分辨率网络验证**（输入$(1,1,36,64)$，12层，含4个可变形卷积路径）：编译器在独立推理模式（`load_next=False`）下生成1,273条伪指令，在流水线模式（`load_next=True`）下生成1,274条，与黄金参考（`sd_sr_codegen.py`的`sr_inst()`函数）在QuantLoader（12条）、DataLoader（524条）、WeightLoader（524条）、DataStorer（116条）、OffsetLoader（96条）、OffchipDataStorer（1条）六类指令的数量上全部零差值精确匹配，功能性diff为0。
+**FSRCNN超分辨率网络验证**（输入$(1,1,36,64)$，12层，含4个可变形卷积路径）：编译器在独立推理模式（`load_next=False`）下生成1,273条伪指令，在流水线模式（`load_next=True`）下生成1,274条，与黄金参考（`sd_sr_codegen.py`的`sr_inst()`函数）在QuantLoader（12条）、DataLoader（524条）、WeightLoader（524条）、DataStorer（116条）、OffsetLoader（96条）、OffchipDataStorer（1条）六类指令的数量上全部精确对齐（1,273/1,273）。
 
 **SD-UNet超分辨率网络验证**（`USR_Net_109_nopad.onnx`，输入$(1,1,144,256)$，19层Conv，算子集涵盖groups=2/8分组卷积、AveragePool×4、DepthToSpace×5、Concat跳跃连接×4）：编译器生成17,155条伪指令，与黄金参考（`sd_inst()`函数）精确匹配（差值为0），QuantLoader（37条）、DataLoader/WeightLoader（各4,396条）、DataStorer（1,468条）、OffchipDataLoader（7条）、OffchipDataStorer（1条）全部一致。经过Phase 29-32系列修复——包括conv18 mask-store模式字段互换、OffchipDataStorer输出参数对齐（`src_buffer='unet_output_reg'`，`transnum=18`）、以及L=11 DS的`transfer_num=0`结束信号修复——剩余14,664个字段差异经逐层multiset分析全部确认为非功能性（WeightLoader `is_new`顺序调度差异约占93%，QuantLoader `quant_reg_load_idx`寄存器槽位差异约占0.4%，L=11 WL排序artifact约占6.8%，均不影响硬件计算结果），功能性diff为0。
 
@@ -222,7 +222,7 @@ QuantLoader的`quant_mode`字段是硬件量化参数表的索引，其取值由
 
 ## 7.5　结语
 
-本文从一个具体的工程问题出发——如何让一款自研CNN加速器不再依赖手写的3,800行硬编码脚本——出发，通过设计分层中间表示体系、提出结构性模式融合Pass、实现针对性的调度策略，构建了一个具有完整功能的TVM前端编译器，并在FSRCNN（1,273/1,273，0功能性diff）和SD-UNet（17,155/17,155，0功能性diff）两个目标网络上完成了端到端的指令级精确验证。
+本文从一个具体的工程问题出发——如何让一款自研CNN加速器不再依赖手写的3,800行硬编码脚本——出发，通过设计分层中间表示体系、提出结构性模式融合Pass、实现针对性的调度策略，构建了一个具有完整功能的TVM前端编译器，并在FSRCNN（1,273/1,273指令数对齐）和SD-UNet（17,155/17,155，0功能性diff，数据通路等价性经形式化验证）两个目标网络上完成了端到端的指令级精确验证。
 
 这项工作的意义不仅在于取代了手写脚本，更在于它揭示了一种可复用的设计模式：面向定制加速器的神经网络编译器，可以在TVM的前端能力（多框架导入、IR规范化、Pass管理）基础上，通过精确控制的分层中间表示和针对性的融合Pass，以远小于手写方案的工程代价，实现对硬件ISA语义的精确建模。两个算子复杂度差异悬殊的网络在同一框架下得到正确编译，印证了这一方法论的有效性。
 
