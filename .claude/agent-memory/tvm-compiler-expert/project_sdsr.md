@@ -6,7 +6,7 @@ type: project
 
 TVM Relay-based compiler frontend for SDSR accelerator, targeting FSRCNN and UNet SR models.
 
-**Current status (as of 2026-04-24):** Core pipeline complete, FSRCNN golden alignment at 1273/1274 instructions (0 functional differences).
+**Current status (as of 2026-04-28):** Instruction count fully aligned (17155/17155 UNet + FSRCNN). All functional fields correct. Address fields (base_addr_pooling, base_addrs_res start, DL bas_addr for skip) still placeholder=0. This is the primary gap before hardware deployment.
 
 **Four-stage pipeline:**
 1. Frontend: relay.from_onnx / from_pytorch, InferType only, no fusion
@@ -24,6 +24,15 @@ TVM Relay-based compiler frontend for SDSR accelerator, targeting FSRCNN and UNe
 - `id(expr)` must NOT be used for TVM node deduplication; use TVM's __hash__ instead
 - feature_buf initialized to 'b' so layer-0 writes to 'a' (matching golden)
 - QuantLoader uses 1-based layer_idx in golden format
+
+**Address allocation gap (researched 2026-04-28):**
+- `ir/addr_alloc.py` _output_size_words() overcounts by cout factor (uses w*cout/64, should be w/64)
+- `base_addr_pooling` is hardcoded 0 in emitter.py at L323/532/604; needs new pool_addr_map
+- Buffer A is UNet's persistent skip-tensor store; buffer B is transient per-layer output
+- Pool output starts immediately after the main skip tensor in buffer A (cumulative layout)
+- base_addr_pooling start values: layer2=1152, layer4=1728, layer6=2016, layer8=2016
+- Recommended plan: Phase A (1-2 days) hardcode golden values in TilingPlan overrides; Phase B (3-5 days) generalize with TilingPlan-driven static layout pass
+- Research document: docs/addr_alloc_research.md
 
 **Why:** SDSR is a fixed-ISA accelerator; the compiler is a structured codegen tool, not a general optimizer. Golden parity is the primary correctness criterion.
 

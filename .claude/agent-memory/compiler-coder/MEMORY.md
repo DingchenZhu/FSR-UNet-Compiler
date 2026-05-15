@@ -1,3 +1,6 @@
 - [sr_inst() golden reference](reference_sr_inst_golden.md) — how to regenerate sr_inst() standalone golden, the 32×32 block assumption, and 12-layer structure
 - [FSRCNN golden diff is field-filtered](feedback_diff_verification.md) — skip set and how to reproduce 1273/1274 line counts via `run_pipeline()` with emit_image_load=False
 - [storer_step per-template stride](project_storer_step.md) — TilingPlan.storer_step replaces hardcoded DS base_addrs_res stride, golden-verified values per template
+- [SD-UNet TilingPlan calibration](project_unet_calibration.md) — Phase 15..29 calibration; Phase 31 added: same_base_for_macros (idx=1/21), flip_acc_reg_idx_on_entry (idx=13/15), conv11 reshape=3 DL formula (+ky_g, -1 correction), conv8/14/15/16 quant_mode/transnum, conv10 line_buffer_rows=1 + wlrs=5, conv12 weight_parall_mode=2/wlrs=4/wlipc=3, ds_transfer_num override, emit_image_load_at_end=True for SD-UNet
+- [layer_diff.py per-layer comparison](tool_layer_diff.md) — tools/layer_diff.py multiset diff bucketed by sorted distinct DL.layer_idx; modes: zero, summary, details
+- [archived golden is_new convention is inverted](feedback_archived_golden_is_new_inversion.md) — `pseudo_code_load_next_mid.txt` flips the WL is_new bit vs sd_sr_codegen.py; do NOT globally invert (user said L=1 is "scheduling difference, don't fix")
