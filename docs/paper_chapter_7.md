@@ -2,59 +2,59 @@
 
 ## 7.1　工作总结
 
-本文面向一款自研CNN硬件加速器的部署需求，设计并实现了一个基于TVM Relay IR的编译器前端，将PyTorch/ONNX格式的神经网络模型自动转换为硬件伪指令序列，取代了原有依赖手工编码的代码生成器`sd_sr_codegen.py`。系统经过三十余个开发阶段的迭代，在FSRCNN和SD-UNet两个目标网络上均实现了与黄金参考的功能性等价，达到可进入上板验证的工程完整状态。
+本文面向一款自研CNN硬件加速器的部署需求，设计并实现了一个基于TVM Relay IR的编译器前端，将PyTorch/ONNX格式的神经网络模型自动转换为硬件伪指令序列，取代了原有依赖手工编码的代码生成器`sd_sr_codegen.py`。系统历经三十余个开发阶段的持续迭代，在FSRCNN和SD-UNet两个目标网络上均达到与黄金参考功能性等价的状态，满足进入上板验证的工程要求。
 
 ### 7.1.1　两个目标网络的完整验证
 
 **FSRCNN超分辨率网络验证**（输入$(1,1,36,64)$，12层，含4个可变形卷积路径）：编译器在独立推理模式（`load_next=False`）下生成1,273条伪指令，在流水线模式（`load_next=True`）下生成1,274条，与黄金参考（`sd_sr_codegen.py`的`sr_inst()`函数）在QuantLoader（12条）、DataLoader（524条）、WeightLoader（524条）、DataStorer（116条）、OffsetLoader（96条）、OffchipDataStorer（1条）六类指令的数量上全部精确对齐（1,273/1,273）。
 
-**SD-UNet超分辨率网络验证**（`USR_Net_109_nopad.onnx`，输入$(1,1,144,256)$，19层Conv，算子集涵盖groups=2/8分组卷积、AveragePool×4、DepthToSpace×5、Concat跳跃连接×4）：编译器生成17,155条伪指令，与黄金参考（`sd_inst()`函数）精确匹配（差值为0），QuantLoader（37条）、DataLoader/WeightLoader（各4,396条）、DataStorer（1,468条）、OffchipDataLoader（7条）、OffchipDataStorer（1条）全部一致。经过Phase 29-32系列修复——包括conv18 mask-store模式字段互换、OffchipDataStorer输出参数对齐（`src_buffer='unet_output_reg'`，`transnum=18`）、以及L=11 DS的`transfer_num=0`结束信号修复——剩余14,664个字段差异经逐层multiset分析全部确认为非功能性（WeightLoader `is_new`顺序调度差异约占93%，QuantLoader `quant_reg_load_idx`寄存器槽位差异约占0.4%，L=11 WL排序artifact约占6.8%，均不影响硬件计算结果），功能性diff为0。
+**SD-UNet超分辨率网络验证**（`USR_Net_109_nopad.onnx`，输入$(1,1,144,256)$，19层Conv，算子集涵盖groups=2/8分组卷积、AveragePool×4、DepthToSpace×5、Concat跳跃连接×4）：编译器生成17,155条伪指令，与黄金参考（`sd_inst()`函数）精确匹配（差值为0），QuantLoader（37条）、DataLoader/WeightLoader（各4,396条）、DataStorer（1,468条）、OffchipDataLoader（7条）、OffchipDataStorer（1条）全部一致。Phase 29–32系列修复之后——conv18 mask-store模式字段互换、OffchipDataStorer输出参数对齐（`src_buffer='unet_output_reg'`，`transnum=18`）、L=11 DS的`transfer_num=0`结束信号修复——剩余14,664个字段差异经逐层multiset分析全部确认为非功能性：WeightLoader `is_new`顺序调度差异约占93%，QuantLoader `quant_reg_load_idx`寄存器槽位差异约占0.4%，L=11 WL排序artifact约占6.8%，均不影响硬件计算结果，功能性diff为0。
 
-两个网络同时达到功能完整状态，验证了编译器框架的通用性：从FSRCNN的12层轻量网络到SD-UNet的19层编解码器对称网络，算子复杂度跨越约一个量级，编译器均能正确生成精确的指令序列。
+12层的轻量超分网络与19层编解码器结构在同一框架下得到正确编译，算子复杂度跨越约一个量级——这是对编译器框架通用性的有力说明。
 
 ### 7.1.2　四级分层中间表示体系
 
-编译器的核心设计是建立从Relay IR到LayerDesc、再到TilingPlan、最终到伪指令流的**四级分层中间表示体系**。每个层次的接口是规范化的数据结构，硬件约束集中建模于层次之间：LayerDesc完成从计算图到几何参数的蒸馏（抽象），TilingPlan将几何参数映射为硬件分块参数（求解），Emitter按分块参数批量发射ISA指令（实例化）。这种分层设计使硬件约束的修改影响范围最小化——改变一条Tiling规则只需修改`tiling.py`中的对应条目，无需触动Emitter的发射逻辑；引入新算子只需在LayerDesc提取和TilingPlan中增加对应分支，不影响已有算子的路径。
+编译器的核心设计是建立从Relay IR到LayerDesc、再到TilingPlan、最终到伪指令流的**四级分层中间表示体系**。这种设计不是一开始就规划好的，而是在迭代中逐步收敛的结果。每个层次之间以规范化数据结构为接口，硬件约束集中建模于层次之间：LayerDesc完成从计算图到几何参数的蒸馏（抽象），TilingPlan将几何参数映射为硬件分块参数（求解），Emitter按分块参数批量发射ISA指令（实例化）。修改一条Tiling规则只需改动`tiling.py`中的对应条目，无需触动Emitter的发射逻辑；引入新算子只需在LayerDesc提取和TilingPlan中增加对应分支，不影响已有路径。
 
-四个层次的具体职责边界值得进一步澄清，以说明这种分层设计相较于直接在Relay IR到指令之间进行一次性翻译的优越性。
+四个层次各自承担明确的职责边界。
 
-**第一级：Relay IR（计算图级）**。承担多框架模型的统一接入，包含完整的算子调用（`relay.Call`）和类型信息（`call.checked_type`）。该层的信息量最丰富，包含了模型的所有拓扑结构、算子属性和张量形状，但同时也包含大量对硬件代码生成无关的元信息（如符号表名称、调试信息、TVM内部属性）。保留原始Relay IR的目的是便于利用TVM既有的形状推断（`InferType`）基础设施，而不进行任何不可逆的信息压缩。
+**第一级：Relay IR（计算图级）**。承担多框架模型的统一接入，保留完整的算子调用（`relay.Call`）和类型信息（`call.checked_type`）。该层信息量最丰富，涵盖所有拓扑结构、算子属性和张量形状，同时也包含大量对硬件代码生成无关的元信息。保留原始Relay IR的目的是便于利用TVM既有的形状推断（`InferType`）基础设施，不进行任何不可逆的信息压缩。
 
-**第二级：LayerDesc（层描述级）**。由`ir/layer_desc.py`的`extract_layer_descs`函数生成，是一种"按需抽象"的精简表示：从每个`relay.Call`中提取硬件代码生成真正需要的最小参数集（`h_in, w_in, cin, cout, k_h, k_w, stride, pad, groups, activation`等），丢弃对后端无用的冗余信息。LayerDesc的关键设计原则是**与具体硬件无关**——它只描述算子的几何语义，不包含任何硬件特有的分块参数。这使得LayerDesc可以在未来被复用于针对不同硬件的TilingPlan生成，而无需修改前端提取逻辑。经过`fuse_offset_generators`和`fuse_activations`两个融合Pass处理后，LayerDesc列表直接对应硬件的逻辑层序列（FSRCNN：12层；SD-UNet：19层conv，加4层pool占位），为后端提供了清晰的层次化视图。
+**第二级：LayerDesc（层描述级）**。由`ir/layer_desc.py`的`extract_layer_descs`函数生成，是一种"按需抽象"的精简表示：从每个`relay.Call`中提取硬件代码生成真正需要的最小参数集（`h_in, w_in, cin, cout, k_h, k_w, stride, pad, groups, activation`等），丢弃对后端无用的冗余信息。LayerDesc与具体硬件无关，只描述算子的几何语义，不含任何硬件特有的分块参数——这使得LayerDesc未来可复用于针对不同硬件的TilingPlan生成，而无需修改前端提取逻辑。经过`fuse_offset_generators`和`fuse_activations`两个融合Pass处理后，LayerDesc列表直接对应硬件的逻辑层序列（FSRCNN：12层；SD-UNet：19层conv，加4层pool占位），为后端提供清晰的层次化视图。
 
-**第三级：TilingPlan（分块参数级）**。由`tiling/tiling.py`的`plan_all`函数从LayerDesc列表批量生成，是硬件约束的主要承载体。TilingPlan的每个字段都对应一个可直接用于指令发射的硬件参数（`h_out_per_step`、`cin_group`、`weight_transnum_base`、`quant_mode`、`acc_mode`、`store_mode`、`oc_inner`等），不含任何需要在发射阶段再次推导的抽象量。这一设计将"确定硬件参数取什么值"（TilingPlan的责任）与"按参数发射什么指令"（Emitter的责任）明确分离，使每个层次只承担单一职责，测试时可独立验证TilingPlan的参数正确性而无需运行完整的指令发射。
+**第三级：TilingPlan（分块参数级）**。由`tiling/tiling.py`的`plan_all`函数从LayerDesc列表批量生成，是硬件约束的主要承载体。每个字段都对应可直接用于指令发射的硬件参数（`h_out_per_step`、`cin_group`、`weight_transnum_base`、`quant_mode`、`acc_mode`、`store_mode`、`oc_inner`等），不含任何需要在发射阶段再次推导的抽象量。"确定硬件参数取什么值"由TilingPlan负责，"按参数发射什么指令"由Emitter负责，二者职责分离，各层可独立验证。
 
-**第四级：伪指令流（ISA级）**。由`backend/emitter.py`的`InstructionEmitter`按TilingPlan参数逐层发射，每条伪指令是一个字段完整的Python字典（包含指令类型、所有操作数字段），经`backend/post_pass.py`的`finalize_instructions`完成依赖分析和虚拟寄存器分配后，成为可直接提交硬件仿真器验证的指令序列。该层是唯一与硬件ISA直接耦合的层次，指令字段的语义完全由硬件文档定义，Emitter的职责是将TilingPlan中的抽象参数精确映射到具体字段值，不包含任何分块策略判断。
+**第四级：伪指令流（ISA级）**。由`backend/emitter.py`的`InstructionEmitter`按TilingPlan参数逐层发射。每条伪指令是一个字段完整的Python字典，经`backend/post_pass.py`的`finalize_instructions`完成依赖分析和虚拟寄存器分配后，成为可直接提交硬件仿真器验证的指令序列。该层是唯一与硬件ISA直接耦合的层次，Emitter的职责是将TilingPlan中的抽象参数精确映射到具体字段值，不包含任何分块策略判断。
 
-这四个层次之间的数据流是单向的（Relay IR → LayerDesc → TilingPlan → 伪指令），不存在反向依赖，使得调试时可以在任意层次截断并独立检查中间产物（`pipeline.py`的`PipelineResult`结构暴露了所有四个层次的输出，方便针对性地定位问题）。
+四个层次之间的数据流是单向的（Relay IR → LayerDesc → TilingPlan → 伪指令），不存在反向依赖，调试时可以在任意层次截断并独立检查中间产物（`pipeline.py`的`PipelineResult`结构暴露了所有四个层次的输出）。
 
-在前端导入层面，系统提供ONNX（`load_onnx`）和PyTorch（`load_pytorch`）双入口，以Relay IR为统一中间表示承接多框架模型。实现过程中发现了TVM `relay.Expr` Python包装对象在属性访问时哈希不稳定的底层机制缺陷，将`id(expr)`替换为`expr`作为访问集合键后，编译时间从超时（UNet残差结构下的指数级重复遍历）缩短至16毫秒。对`torchvision.ops.deform_conv2d`的透明导入，发掘了TVM内置的转换支持，避免了大量重复的自定义算子注册工作。对PyTorch模型，通过`torch.jit.trace`进行静态追踪得到TorchScript图，使TVM前端能够在Python级别以外访问完整的算子图结构，这是可变形卷积得以被正确识别和导入的关键前提。ONNX入口则在处理initializer节点时需要区分真正的动态输入与静态权重常量（initializers列表中的权重不应加入形状字典），以避免权重被错误地视为动态输入而导致形状推断失败——这一实践细节对于含有大量常量权重的量化网络尤为重要。
+在前端导入层面，系统提供ONNX（`load_onnx`）和PyTorch（`load_pytorch`）双入口，以Relay IR为统一中间表示承接多框架模型。实现过程中发现了TVM `relay.Expr` Python包装对象在属性访问时哈希不稳定的底层机制缺陷，将`id(expr)`替换为`expr`作为访问集合键后，编译时间从超时（UNet残差结构下的指数级重复遍历）缩短至16毫秒。对`torchvision.ops.deform_conv2d`的透明导入，发掘了TVM内置的转换支持，避免了大量重复的自定义算子注册工作。对PyTorch模型，通过`torch.jit.trace`进行静态追踪得到TorchScript图，使TVM前端能够在Python级别以外访问完整的算子图结构，这是可变形卷积得以被正确识别和导入的关键前提。ONNX入口则在处理initializer节点时需要区分真正的动态输入与静态权重常量——initializers列表中的权重不应加入形状字典，否则会导致权重被错误地视为动态输入而引发形状推断失败，对于含有大量常量权重的量化网络尤为关键。
 
 ### 7.1.3　OffsetGenerator子图融合Pass
 
-OffsetGenerator子图融合Pass是本文的核心技术贡献之一。该Pass基于连续三层的结构性模式匹配，将偏移量生成子网络（`pool2d → conv2d(cout=18) → deformable_conv2d`）识别为`offset_gen`算子，确保其输出DataStorer以`dest_buffer_idx='offset_reg'`写出偏移寄存器，而非误入普通数据buffer。这一Pass使FSRCNN中全部4个OffsetGenerator层从指令语义错误（0条`dest=offset_reg`的DataStorer）直接转变为完全正确，是可变形卷积硬件加速路径（OffsetLoader + 双线性插值WeightLoader）能够正常工作的先决条件。
+OffsetGenerator子图融合Pass是本文的核心技术贡献之一。该Pass基于连续三层的结构性模式匹配，将偏移量生成子网络（`pool2d → conv2d(cout=18) → deformable_conv2d`）识别为`offset_gen`算子，确保其输出DataStorer以`dest_buffer_idx='offset_reg'`写出偏移寄存器，而非误入普通数据buffer。Pass的引入，使FSRCNN中全部4个OffsetGenerator层从指令语义错误（0条`dest=offset_reg`的DataStorer）直接转变为完全正确，是可变形卷积硬件加速路径能够正常工作的先决条件。
 
-Pass的设计有两点值得强调：其一，识别规则的严格性（pool2d + conv2d(cout=18) + deformable\_conv2d三个条件同时成立）避免了对其他输出通道恰好为18的普通卷积的误识别；其二，`fuse_offset_generators`对SD-UNet的输出**零影响**（SD-UNet不含OffsetGenerator结构，Pass对其输入列表原样返回），验证了模式匹配识别规则的精确性和隔离性。
+识别规则的严格性（pool2d + conv2d(cout=18) + deformable\_conv2d三个条件同时成立）避免了对其他输出通道恰好为18的普通卷积的误识别。反过来看，`fuse_offset_generators`对SD-UNet的输出**零影响**（SD-UNet不含OffsetGenerator结构，Pass对其输入列表原样返回），这恰好验证了模式匹配识别规则的精确性和隔离性。
 
-深入理解这个Pass的价值，需要从可变形卷积的硬件实现机制说起。目标加速器对可变形卷积的支持不是通过通用路径（展开为多个基础算子的逐元素计算）实现的，而是依靠两个专用硬件单元的协作：OffsetLoader负责将偏移量值从片上寄存器（offset\_reg）读出并送入地址生成单元（Address Generation Unit），WeightLoader的双线性插值模式（`is_bilinear_bicubic=1`）则利用OffsetLoader提供的亚像素坐标，在特征图上进行四点邻域的线性加权插值，从而实现不规则采样。两个单元的协作依赖一个隐式契约：在WeightLoader被调用之前，offset\_reg中必须已经存放了有效的偏移量数据。
+理解这个Pass的价值，需要从可变形卷积的硬件实现机制说起。目标加速器对可变形卷积的支持依靠两个专用硬件单元的协作：OffsetLoader负责将偏移量值从片上寄存器（offset\_reg）读出并送入地址生成单元，WeightLoader的双线性插值模式（`is_bilinear_bicubic=1`）则利用OffsetLoader提供的亚像素坐标，在特征图上进行四点邻域的线性加权插值，实现不规则采样。两个单元之间存在一个隐式契约：在WeightLoader被调用之前，offset\_reg中必须已经存放了有效的偏移量数据。
 
-这个隐式契约在编译器层面的对应关系是：**DataStorer指令必须以`dest_buffer_idx='offset_reg'`将偏移量生成卷积（即`conv2d(cout=18)`）的输出写入offset\_reg**，而非写入普通的feature buffer（'a'或'b'）。在通用的编译器路径中，一个`cout=18`的`conv2d`与任何其他卷积没有语义区别，其DataStorer自然会写入当前的ping-pong feature buffer。OffsetGenerator融合Pass的核心贡献正是打破这种"语义透明"的幻觉：通过精确的三元模式匹配，在IR级别将具有特定功能语义（偏移量生成）的子图识别出来，并将其路由到能够正确设置`dest_buffer_idx='offset_reg'`的专用发射路径（`_emit_offset_gen`方法）。
+这个隐式契约在编译器层面的对应关系是：**DataStorer指令必须以`dest_buffer_idx='offset_reg'`将偏移量生成卷积（即`conv2d(cout=18)`）的输出写入offset\_reg**，而非写入普通的feature buffer（'a'或'b'）。在通用的编译器路径中，一个`cout=18`的`conv2d`与任何其他卷积没有语义区别，其DataStorer自然会写入当前的ping-pong feature buffer。OffsetGenerator融合Pass打破了这种"语义透明"的幻觉：通过精确的三元模式匹配，在IR级别将具有特定功能语义（偏移量生成）的子图识别出来，路由到能够正确设置`dest_buffer_idx='offset_reg'`的专用发射路径（`_emit_offset_gen`方法）。
 
-从通用IR设计的角度看，这一设计决策体现了一类普遍存在于硬件加速器编译器中的问题：**通用IR中缺乏对硬件专用功能单元的一等公民语义表示**。解决这类问题的通用策略有两种——其一是在IR中引入新的算子类型（如直接定义`offset_gen_conv2d`算子），其二是通过模式匹配Pass将已有算子序列映射到专用语义。本文选择第二种方案，是因为目标模型（FSRCNN）的PyTorch/ONNX源文件中不存在`offset_gen_conv2d`这样的算子，强行在IR中定义新算子会破坏从框架导入的透明性；而基于模式匹配的融合Pass则可以在保持前端导入完全标准化的同时，在IR处理阶段插入精确的语义解析，是一种对源模型格式侵入性最低的方案。
+从通用IR设计的角度看，这一设计决策体现了一类普遍存在于硬件加速器编译器中的问题：**通用IR中缺乏对硬件专用功能单元的一等公民语义表示**。解决这类问题有两种策略——在IR中引入新算子类型，或通过模式匹配Pass将已有算子序列映射到专用语义。本文选择后者，是因为目标模型（FSRCNN）的PyTorch/ONNX源文件中不存在`offset_gen_conv2d`这样的算子，强行在IR中定义新算子会破坏从框架导入的透明性；而基于模式匹配的融合Pass可以在保持前端导入完全标准化的同时，在IR处理阶段插入精确的语义解析，对源模型格式侵入性最低。
 
-此外，OffsetGenerator融合Pass的副产品之一是将pool2d节点从独立的LayerDesc转换为被合并到`offset_gen`中的`extra`字段（记录`pool_stride`参数），消除了pool2d在指令发射阶段可能导致的PseudoOp插入问题，使最终指令流中的PseudoOp数量严格为零，与黄金参考的行为完全一致。这一"顺手消除"的效果是Pass级联设计（`fuse_offset_generators` 先于 `fuse_activations` 执行）所带来的自然收益，展示了分层中间表示架构中Pass之间正交组合的优雅性。
+此外，OffsetGenerator融合Pass的副产品之一是将pool2d节点从独立的LayerDesc转换为被合并到`offset_gen`中的`extra`字段（记录`pool_stride`参数），消除了pool2d在指令发射阶段可能导致的PseudoOp插入问题，使最终指令流中的PseudoOp数量严格为零，与黄金参考的行为完全一致。这一"顺手消除"的效果是Pass级联设计（`fuse_offset_generators` 先于 `fuse_activations` 执行）带来的自然收益，展示了分层中间表示架构中Pass之间正交组合的特性。
 
 ### 7.1.4　SD-UNet的系列扩展工作
 
-SD-UNet（USR\_Net\_109）的支持涵盖了FSRCNN完全没有触及的若干新类型算子和新调度模式，代表了本编译器在算子覆盖维度上的主要扩展贡献：
+SD-UNet（USR\_Net\_109）的支持覆盖了FSRCNN完全没有触及的若干新类型算子和新调度模式，代表了本编译器在算子覆盖维度上的主要扩展贡献：
 
-**全高度流式调度**（§5.5）：引入`tile_h=None`分支，以整个H维度为单一分块，按1行或2行步长逐行推进。借助TVM的形状推断机制（`relay.transform.InferType()`），AveragePool下采样带来的`h_in/w_in`折半信息自动传递给下游conv层的`load_total_num`计算，无需额外的折半逻辑。全高度模式与FSRCNN的分块流水模式共享同一套代码路径，分流逻辑仅在`choose_tiling()`函数内的一行条件判断处发生，实现了零代码重复。
+**全高度流式调度**（§5.5）：引入`tile_h=None`分支，以整个H维度为单一分块，按1行或2行步长逐行推进。借助TVM的形状推断机制（`relay.transform.InferType()`），AveragePool下采样带来的`h_in/w_in`折半信息自动传递给下游conv层的`load_total_num`计算，无需额外的折半逻辑。全高度模式与FSRCNN的分块流水模式共享同一套代码路径，分流逻辑仅在`choose_tiling()`函数内的一行条件判断处发生，代码无重复。
 
-**分组卷积双级循环发射**（§6.3.6）：针对groups=2（conv6）和groups=8（conv7/conv8/conv10）四种发射模式，通过`_apply_group_params`函数按条件分支配置8个group相关字段，实现双级循环框架（level1 × level2）。其中conv10的真双级嵌套（level1=2，level2=4，QL在内层每次迭代发射）与conv7/conv8的单级外循环（QL在外层开始时发射一次）在同一`_emit_group_conv`框架内统一处理，且groups=1时自动退化为单次迭代，保证FSRCNN路径零影响。
+**分组卷积双级循环发射**（§6.3.6）：针对groups=2（conv6）和groups=8（conv7/conv8/conv10）四种发射模式，通过`_apply_group_params`函数按条件分支配置8个group相关字段，实现双级循环框架（level1 × level2）。conv10的真双级嵌套（level1=2，level2=4，QL在内层每次迭代发射）与conv7/conv8的单级外循环（QL在外层开始时发射一次）在同一`_emit_group_conv`框架内统一处理，且groups=1时自动退化为单次迭代，保证FSRCNN路径零影响。
 
 **DepthToSpace透明化注入**（§5.5）：分析黄金参考中DepthToSpace对应的DataStorer字段（`is_pixelshuffle=1`、`pixelshuffle_out_mode`、`acc_mode`、`store_mode`、`transfer_num`、`stride`），在前驱Conv层的DataStorer中透明注入，不增减指令条数，但消除了对应字段的结构性差异。DepthToSpace节点本身在指令流中产生零条ISA指令，类似pool2d的透明化处理。
 
-**conv18 mask-store模式与输出层参数对齐**（§6.5.3 Phase 31）：SD-UNet最终输出层（conv18）以mask-store模式（`is_mask=1`）写入`unet_output_reg`寄存器，其DataStorer字段与普通conv存在本质差异：`is_pooling`、`pooling_out_mode`均置为特殊值（1和4），`pix_transfer_num`由1变为2，且`base_addr_pooling`与`base_addrs_res`的增量地址角色互换——普通层增量走`base_addrs_res`通道，conv18改走`base_addr_pooling`。此外，OffchipDataStorer的`src_buffer`须为`'unet_output_reg'`（区别于FSRCNN的`'fsrcnn_output_buffer'`），`transnum=18`。以上两处修复通过`TilingPlan.is_mask`标志和`PipelineConfig`的输出参数配置实现。
+**conv18 mask-store模式与输出层参数对齐**（§6.5.3 Phase 31）：SD-UNet最终输出层（conv18）以mask-store模式（`is_mask=1`）写入`unet_output_reg`寄存器，DataStorer字段与普通conv存在本质差异：`is_pooling`、`pooling_out_mode`均置为特殊值（1和4），`pix_transfer_num`由1变为2，且`base_addr_pooling`与`base_addrs_res`的增量地址角色互换——普通层增量走`base_addrs_res`通道，conv18改走`base_addr_pooling`。此外，OffchipDataStorer的`src_buffer`须为`'unet_output_reg'`（区别于FSRCNN的`'fsrcnn_output_buffer'`），`transnum=18`。以上两处修复通过`TilingPlan.is_mask`标志和`PipelineConfig`的输出参数配置实现。
 
 **L=11 DS结束信号机制**（§6.5.3 Phase 32）：conv11（groups=2）每个group的最后一次DataStorer需以`transfer_num=0`作为group结束信号，而非与组内其他DS相同的`transfer_num=1`。修复通过在`TilingPlan`新增`ds_last_transfer_num`字段（默认`None`），并在`_emit_group_w_tile`函数的DS发射末尾根据`load_idx == load_total-1`条件覆盖`pix_transfer_num`字段来实现，消除了L=11 DS的最后2条功能性差异。
 
@@ -62,11 +62,11 @@ SD-UNet（USR\_Net\_109）的支持涵盖了FSRCNN完全没有触及的若干新
 
 ### 7.1.5　工程维度对比
 
-系统以约800行通用框架代码（`pipeline.py`、`frontend/`、`ir/`、`tiling/`、`backend/`九个核心模块）取代原有3,800行硬编码脚本，代码规模降低约80%，同时实现了FSRCNN和SD-UNet两个网络的完整指令生成，新模型的接入代价从数周的手工重写缩减为增量式的规则扩展（新算子仅需在LayerDesc和TilingPlan层增加对应条目）。
+系统以约800行通用框架代码（`pipeline.py`、`frontend/`、`ir/`、`tiling/`、`backend/`九个核心模块）取代原有3,800行硬编码脚本，代码规模降低约80%，同时实现了FSRCNN和SD-UNet两个网络的完整指令生成。新模型的接入代价从数周的手工重写缩减为增量式的规则扩展：新算子仅需在LayerDesc和TilingPlan层增加对应条目。
 
-这一代码规模缩减的背后是设计范式的根本性转变。手写方案`sd_sr_codegen.py`的约3,800行代码中，有相当大比例是对两个固定网络的状态转移进行手工展开：每一层的`DataLoaderManager`调用、`WeightLoaderManager`状态推进、地址偏移的算术计算、乒乓buffer切换判断，均以内联数值常量的形式散布于代码各处。当修改一处输入分辨率时，对应的`cal_total_num`、`bas_addr`增量、地址边界等参数需要在数十个位置同步更新，极易遗漏；当引入新算子（如可变形卷积的OffsetLoader路径）时，需要从零设计对应的状态机逻辑并确保与已有状态变量的正确交互，门槛极高。
+代码规模的缩减背后，是设计范式的根本性转变。手写方案`sd_sr_codegen.py`的约3,800行代码中，有相当大比例是对两个固定网络的状态转移进行手工展开：每一层的`DataLoaderManager`调用、`WeightLoaderManager`状态推进、地址偏移的算术计算、乒乓buffer切换判断，均以内联数值常量的形式散布于代码各处。修改一处输入分辨率时，对应的`cal_total_num`、`bas_addr`增量、地址边界等参数需要在数十个位置同步更新，极易遗漏；引入新算子（如可变形卷积的OffsetLoader路径）时，需要从零设计对应的状态机逻辑并确保与已有状态变量的正确交互，门槛极高。
 
-本编译器的800行代码是结构性的，而非展开的。核心状态机（`EmitterState`）以统一的数据结构封装所有可变状态字段（`feature_buf`、`line_buffer_idx`、`acc_reg_idx`、`weight_bas_addr`、`conv_layer_counter`等），指令发射逻辑与状态更新逻辑分离，各算子类型的发射路径在单一分支内完整实现，互不干扰。这种设计使代码的复杂度随算子种类呈线性增长，而非随模型-算子组合爆炸。
+本编译器的800行代码是结构性的，而非展开的。核心状态机（`EmitterState`）以统一的数据结构封装所有可变状态字段（`feature_buf`、`line_buffer_idx`、`acc_reg_idx`、`weight_bas_addr`、`conv_layer_counter`等），指令发射逻辑与状态更新逻辑分离，各算子类型的发射路径在单一分支内完整实现，互不干扰。代码复杂度随算子种类呈线性增长，而非随模型-算子组合爆炸。
 
 从具体的工程指标看，两种方案的可维护性差距尤为突出：
 
@@ -76,19 +76,19 @@ SD-UNet（USR\_Net\_109）的支持涵盖了FSRCNN完全没有触及的若干新
 
 **测试可维护性**：手写方案与特定模型的黄金状态高度耦合，修改任何逻辑都需重新核对整个指令流；本编译器各层次（LayerDesc提取、TilingPlan生成、指令发射）均有独立的单元测试接口，可针对单层或单类算子进行隔离验证，将回归测试的粒度从"全模型"细化到"单算子类型"。
 
-综合上述分析，代码规模从3,800行压缩至800行所带来的工程价值，远不止于代码量本身的减少，而在于它将系统的认知复杂度降低到单个工程师可以独立理解和维护的范围内，为后续的算子扩展和硬件迭代奠定了可持续的工程基础。
+代码规模从3,800行压缩至800行所带来的工程价值，远不止于代码量本身的减少，而在于它将系统的认知复杂度降低到单个工程师可以独立理解和维护的范围内，为后续的算子扩展和硬件迭代提供了可持续的工程基础。
 
 ---
 
 ## 7.2　主要技术贡献的系统性归纳
 
-回顾全文工作，本文的技术贡献可从三个层面系统性归纳：
+回顾全文工作，技术贡献可从三个层面加以梳理：
 
-**层面一：IR层设计贡献**。提出了从Relay IR到LayerDesc的蒸馏机制（`ir/layer_desc.py`），以"按需抽象"原则仅保留后端代码生成所需的最小参数集，避免了Relay IR中冗余信息对后端的污染。发现并修复了TVM Python包装对象哈希不稳定缺陷（`id(expr)` vs `expr` in `visited`），该缺陷在DAG结构（如残差网络）中具有指数级放大效应。提出OffsetGenerator子图融合Pass，以精确的三元结构性模式匹配实现了"将标准算子序列正确映射为硬件专用指令目标地址"的语义转换。
+**层面一：IR层设计贡献**。我们提出了从Relay IR到LayerDesc的蒸馏机制（`ir/layer_desc.py`），以"按需抽象"原则仅保留后端代码生成所需的最小参数集，避免了Relay IR中冗余信息对后端的污染。发现并修复了TVM Python包装对象哈希不稳定缺陷（`id(expr)` vs `expr` in `visited`），该缺陷在DAG结构（如残差网络）中具有指数级放大效应。提出OffsetGenerator子图融合Pass，以精确的三元结构性模式匹配实现了"将标准算子序列正确映射为硬件专用指令目标地址"的语义转换。
 
-**层面二：分块与调度贡献**。归纳出覆盖FSRCNN全部层类型的五种分块模板（Template C/D/E/F及offset\_gen专用模板），并建立了面向SD-UNet的形状键查表+idx二级消歧机制（`_UNET_LAYER_TABLE` + `_UNET_IDX_OVERRIDE_TABLE`），解决了"形状签名相同但网络语义不同"的歧义问题。设计了全高度流式调度与分块流水调度的双模式架构，实现了`tile_h`参数的统一分流控制。引入`oc_inner`外层循环机制，支持输入重扫描型双oc迭代（出现于SD-UNet decoder层的输出通道数超过一次并行处理上限的情形）。
+**层面二：分块与调度贡献**。我们归纳出覆盖FSRCNN全部层类型的五种分块模板（Template C/D/E/F及offset\_gen专用模板），并建立了面向SD-UNet的形状键查表+idx二级消歧机制（`_UNET_LAYER_TABLE` + `_UNET_IDX_OVERRIDE_TABLE`），解决了"形状签名相同但网络语义不同"的歧义问题。全高度流式调度与分块流水调度的双模式架构，实现了`tile_h`参数的统一分流控制。`oc_inner`外层循环机制，支持输入重扫描型双oc迭代（出现于SD-UNet decoder层的输出通道数超过一次并行处理上限的情形）。
 
-**层面三：硬件接口正确性贡献**。实现了ping-pong双缓冲的逐层正确交替分配（offset\_gen层不切换`feature_buf`状态），消除了早期实现中全部层使用同一buffer方向的系统性错误。实现了`acc_mode`/`store_mode`的7规则自动推导，覆盖offset\_gen、deformable\_conv、标准conv+prelu/relu、末层conv等全部场景。实现了QuantLoader 1-based连续编号策略（`conv_layer_counter`跳过prelu和pool2d），以及`line_buffer_idx`不变式（DL和WL必须使用相同值，toggle统一在WL之后发生）。Post-Pass中的虚拟寄存器分配算法（15个可用寄存器，LIFO分配，`src4` quirk的刻意保留）以及7类依赖分析规则，保证了指令流与硬件调度器的精确接口。针对SD-UNet最终输出层，建立了mask-store专用的DataStorer字段推导规则——包括`base_addr_pooling`与`base_addrs_res`增量通道的模式感知互换，以及OffchipDataStorer的网络感知参数配置（`src_buffer`与`transnum`）；引入`TilingPlan.ds_last_transfer_num`机制，支持分组卷积每组最后一次DataStorer以`transfer_num=0`为结束信号，完整覆盖了硬件group结束协议。
+**层面三：硬件接口正确性贡献**。ping-pong双缓冲的逐层正确交替分配（offset\_gen层不切换`feature_buf`状态），消除了早期实现中全部层使用同一buffer方向的系统性错误。`acc_mode`/`store_mode`的7规则自动推导，覆盖offset\_gen、deformable\_conv、标准conv+prelu/relu、末层conv等全部场景。QuantLoader 1-based连续编号策略（`conv_layer_counter`跳过prelu和pool2d），以及`line_buffer_idx`不变式（DL和WL必须使用相同值，toggle统一在WL之后发生）。Post-Pass中的虚拟寄存器分配算法（15个可用寄存器，LIFO分配，`src4` quirk的刻意保留）以及7类依赖分析规则，保证了指令流与硬件调度器的精确接口。针对SD-UNet最终输出层，建立了mask-store专用的DataStorer字段推导规则——包括`base_addr_pooling`与`base_addrs_res`增量通道的模式感知互换，以及OffchipDataStorer的网络感知参数配置（`src_buffer`与`transnum`）；`TilingPlan.ds_last_transfer_num`机制，支持分组卷积每组最后一次DataStorer以`transfer_num=0`为结束信号，完整覆盖了硬件group结束协议。
 
 ---
 
@@ -100,7 +100,7 @@ SD-UNet（USR\_Net\_109）的支持涵盖了FSRCNN完全没有触及的若干新
 
 本编译器与黄金参考`sd_sr_codegen.py`均采用静态顺序调度（Static Sequential Scheduling）：在cin\_group循环中，对同一外层H-tile的各个输入通道组按序处理，第一组使用`is_new=0`（清零写入acc\_reg），后续组使用`is_new=1`（累加）。
 
-黄金参考的部分层（主要是SD-UNet的大通道conv层）采用了交错调度（Interleaved Scheduling）：在两个外层H-tile的cin\_group循环之间穿插执行，以隐藏相邻tile之间的数据依赖延迟。这种交错模式在不改变最终计算结果的前提下，能够更好地利用硬件流水线的空泡时间。然而，交错调度的实际理论收益上界远低于直觉估计。以SD-UNet的conv层为例，其算术强度（Arithmetic Intensity）集中在160~638 FLOPS/byte区间（例如conv7：$C_{in}=64, C_{out}=64, k=3, H=144$对应约638 FLOPS/byte；conv6：$C_{in}=32, C_{out}=32, k=3, H=144$对应约319 FLOPS/byte），属于强compute-bound（强计算密集型）区域——权重加载时间仅为MAC计算时间的$1/500$至$1/18000$。换言之，可被交错调度隐藏的内存访问延迟本身在整个执行时间中的占比极低，交错调度的吞吐量提升上界约为**0.1%~0.2%**，并非此前估计的5%~15%——后者适用于访存密集型（memory-bound）场景，而非本网络实际所处的计算密集型工作点。
+黄金参考的部分层（主要是SD-UNet的大通道conv层）采用了交错调度（Interleaved Scheduling）：在两个外层H-tile的cin\_group循环之间穿插执行，以隐藏相邻tile之间的数据依赖延迟。问题不止于此。交错调度的实际理论收益上界远低于直觉估计。以SD-UNet的conv层为例，其算术强度（Arithmetic Intensity）集中在160~638 FLOPS/byte区间（例如conv7：$C_{in}=64, C_{out}=64, k=3, H=144$对应约638 FLOPS/byte；conv6：$C_{in}=32, C_{out}=32, k=3, H=144$对应约319 FLOPS/byte），属于强compute-bound（强计算密集型）区域——权重加载时间仅为MAC计算时间的$1/500$至$1/18000$。换言之，可被交错调度隐藏的内存访问延迟本身在整个执行时间中的占比极低，交错调度的吞吐量提升上界约为**0.1%~0.2%**，并非此前估计的5%~15%——后者适用于访存密集型（memory-bound）场景，而非本网络实际所处的计算密集型工作点。
 
 编译器当前采用顺序调度的原因是实现简单性和验证可控性——两种调度方式产生相同的计算结果，差异仅体现在`is_new`字段的时序顺序上，这正是SD-UNet中14,664个非功能性字段差异中约93%的来源。实现交错调度的理论复杂度估计为对Emitter状态机的中等改造，但需要额外的正确性验证以排除边界情形下的状态污染风险，因此规划为后续工程优化任务。
 
@@ -110,11 +110,11 @@ SD-UNet（USR\_Net\_109）的支持涵盖了FSRCNN完全没有触及的若干新
 
 QuantLoader的`quant_mode`字段是硬件量化参数表的索引，其取值由量化感知训练（Quantization-Aware Training, QAT）或量化标定（calibration）过程决定，无法从模型拓扑结构中推演。当前实现采用从黄金参考中反向分析得到的固定映射表；将编译器应用于新模型时，需要以JSON格式的per-layer配置表作为额外输入。这是量化部署场景的普遍约束，不破坏系统的通用性，但增加了接入成本。相比之下，`acc_mode`和`store_mode`已实现自动推导，当前唯一仍需外部提供的量化相关参数即为`quant_mode`。
 
-要理解这一局限性的深层根源，需要明确`quant_mode`字段在硬件语义中所扮演的角色。目标加速器的QuantLoader并不直接存储浮点缩放因子，而是维护一张片上量化参数表（quantization parameter table），表中每个条目（entry）对应一种特定的量化配置——包括输入激活值的量化位宽、缩放因子的定点表示、零点偏移（zero-point offset）等。`quant_mode`本质上是这张表的行索引，决定了当前层的卷积输出在写入DataStorer时采用哪一种量化规则进行激活值量化。这意味着，`quant_mode`的正确取值需要在知道该层激活值的统计分布范围的前提下才能确定——而这一信息只有在真实数据上运行标定（calibration）过程，或在QAT训练过程中通过梯度更新学习到的量化感知参数中才能获得。
+要理解这一局限性的深层根源，需要明确`quant_mode`字段在硬件语义中所扮演的角色。目标加速器的QuantLoader并不直接存储浮点缩放因子，而是维护一张片上量化参数表（quantization parameter table），表中每个条目（entry）对应一种特定的量化配置——包括输入激活值的量化位宽、缩放因子的定点表示、零点偏移（zero-point offset）等。`quant_mode`本质上是这张表的行索引，决定了当前层的卷积输出在写入DataStorer时采用哪一种量化规则进行激活值量化。因此，`quant_mode`的正确取值需要在知道该层激活值的统计分布范围的前提下才能确定——而这一信息只有在真实数据上运行标定（calibration）过程，或在QAT训练过程中通过梯度更新学习到的量化感知参数中才能获得。
 
 从当前实现的处理方式来看，编译器通过对黄金参考`sd_sr_codegen.py`的逐层代码分析，将FSRCNN的12层和SD-UNet的19层的`quant_mode`取值逐一提取，形成以层形状签名（或层索引）为键的固定映射表，硬编码于`tiling/tiling.py`的各TilingPlan条目中。对于FSRCNN，12个conv类层的`quant_mode`取值范围为{0, 2}，其中offset\_gen专用层取2，其余取0；对于SD-UNet的19层，取值范围更广，覆盖多个量化精度等级。这些数值直接来自硬件团队标定后固化到黄金参考中的结果，具有与真实硬件对齐的正确性保证。
 
-然而，这种反向提取的方式有其根本的局限性：它将量化标定信息隐式地绑定在特定的模型权重和特定的标定数据集上，而无法泛化到权重发生变化（如模型微调）或输入数据分布发生变化（如不同场景的图像）的情形。当前两个目标网络的权重已固定，因此这一限制在实际部署中不构成问题；但一旦需要在同一硬件上部署经过fine-tune的模型变体，原有的`quant_mode`映射表就必须重新标定和更新，现有的编译器接口并不提供将新标定结果注入编译流程的标准化路径。
+然而，这种反向提取的方式有其根本的局限性：它将量化标定信息隐式地绑定在特定的模型权重和特定的标定数据集上，无法泛化到权重发生变化（如模型微调）或输入数据分布发生变化（如不同场景的图像）的情形。当前两个目标网络的权重已固定，因此这一限制在实际部署中不构成问题；但一旦需要在同一硬件上部署经过fine-tune的模型变体，原有的`quant_mode`映射表就必须重新标定和更新，现有的编译器接口并不提供将新标定结果注入编译流程的标准化路径。
 
 从量化工作流的整体视角看，`quant_mode`的正确生成需要编译器与QAT/PTQ（训练后量化，Post-Training Quantization）工具链之间建立明确的数据接口。理想的集成方式是：量化工具链在完成标定后输出一份per-layer的量化配置描述（如ONNX的QuantizationAnnotation或专有JSON格式），编译器将其作为第一类输入（first-class input）读取，从中自动提取每层的`quant_mode`索引，填入对应的TilingPlan条目。这不仅消除了当前手工维护映射表的工程负担，还为同一编译器前端支持"同一网络结构、不同量化精度配置"的多个部署变体提供了可能，是将编译器从"为两个固定模型服务"升级为"为任意量化CNN模型服务"的必要条件之一。§7.4.3节将进一步阐述这一集成方案的技术路线。
 
@@ -132,17 +132,17 @@ QuantLoader的`quant_mode`字段是硬件量化参数表的索引，其取值由
 
 **`line_buffer_row_shift`（320处差异）**和**`is_padding_col`（320处差异）**：这两个字段均属于WeightLoader的ISA模板参数，`line_buffer_row_shift`指定WeightLoader从line buffer读取权重时的行偏移量（用于处理非零填充（padding）情形下边界行的寻址修正），`is_padding_col`则标记当前WeightLoader加载的是否为填充列（用于抑制边界区域的无效累加）。这两个字段在FSRCNN的标准卷积层（L0的cin=1首层及L11的输出层）和SD-UNet的部分3×3卷积层中存在与黄金参考的差异，数量恰好相同（均为320处），表明两者很可能在相同的指令集合上同时偏离，属于同一逻辑单元在不同字段上的联动差异。其根因是当前TilingPlan未将padding信息（`pad_top/pad_bottom/pad_left/pad_right`）传导至WeightLoader的字段推导逻辑中，修复路径是在`_emit_w_macro_tile`中根据`layer.pad_top > 0`条件动态设置这两个字段，而非沿用全局默认值。
 
-综合三类差异的分析，其修复并不涉及架构层面的改动，也不需要修改任何已经正确建立的状态机逻辑——它们是TilingPlan字段推导规则的局部精化，每处修复只影响生成对应字段值的几行代码。从工程优先级排序来看，建议先完成`quant_mode`集成（§7.4.3）和`bas_addr`精确推导（§7.4.4）这两项影响功能完整性的工作，再推进上述ISA模板参数的精化，以最终达成全字段精确匹配的目标。
+综合三类差异的分析，修复并不涉及架构层面的改动，也不需要修改任何已经正确建立的状态机逻辑——它们是TilingPlan字段推导规则的局部精化，每处修复只影响生成对应字段值的几行代码。从工程优先级排序来看，建议先完成`quant_mode`集成（§7.4.3）和`bas_addr`精确推导（§7.4.4）这两项影响功能完整性的工作，再推进上述ISA模板参数的精化，以最终达成全字段精确匹配的目标。
 
 ### 7.3.5　编译器覆盖范围的边界
 
-当前编译器的算子覆盖以FSRCNN和SD-UNet为设计基准，对于Attention机制（自注意力层）、Transformer块、深度可分离卷积（Depthwise Separable Convolution）的扩展尚未实现；多批次（batch>1）推理的TilingPlan模板也尚未建立。这些限制在本文的目标加速器和目标网络范围内不构成功能缺口，但在面向更广泛的网络族群时需要系统性扩展。
+当前编译器的算子覆盖以FSRCNN和SD-UNet为设计基准，对于Attention机制（自注意力层）、Transformer块、深度可分离卷积（Depthwise Separable Convolution）的扩展尚未实现；多批次（batch>1）推理的TilingPlan模板也尚未建立。这些限制在本文的目标加速器和目标网络范围内不构成功能缺口，但面向更广泛的网络族群时需要系统性扩展。
 
-具体而言，当前编译器在以下几个算子维度存在明确的覆盖空白，有必要说明每处边界背后的技术含义：
+具体而言，当前编译器在以下几个算子维度存在明确的覆盖空白：
 
 **深度可分离卷积（Depthwise Separable Convolution, DSC）的缺失**：深度可分离卷积由逐通道卷积（Depthwise Convolution，`groups=C_in`）与逐点卷积（Pointwise Convolution，1×1 conv）两个算子串联构成，在MobileNet [Howard, 2017]、EfficientNet [Tan, 2019]等轻量化网络中广泛使用。目标加速器的MAC阵列对`groups=C_in`的极端情形（每组仅有1个输入通道）是否有专用执行路径，尚未在硬件文档中明确标注，因此目前的`_apply_group_params`分支逻辑未覆盖`groups > 8`的情形。从代码架构看，逐通道卷积可视为分组卷积的极端情形（`group_level1=C_in, group_level2=1`），只需确认硬件是否支持以及对应的`weight_parall_mode`和`cin_group`参数取值，即可在现有双级循环框架内完成扩展，不需要引入新的指令类型。
 
-**Attention机制与Transformer块的缺失**：当前目标加速器ISA的7类指令（OffchipDataLoader/DataLoader/WeightLoader/OffsetLoader/QuantLoader/DataStorer/OffchipDataStorer）是面向CNN卷积特征提取设计的，尚未包含用于实现多头自注意力（Multi-Head Self-Attention, MHSA）所必需的点积缩放（Scaled Dot-Product Attention）、Softmax激活、位置编码等算子的硬件加速路径。因此，将当前编译器扩展到Transformer类网络（如ViT [Dosovitskiy, 2020]、Swin Transformer [Liu, 2021]），需要先在硬件层面引入对应的新指令类型，再在编译器的LayerDesc解析、TilingPlan生成和Emitter三个层次同步扩展，是一项涉及硬件-编译器协同设计的系统性工作，超出本文的范围。
+**Attention机制与Transformer块的缺失**：当前目标加速器ISA的7类指令（OffchipDataLoader/DataLoader/WeightLoader/OffsetLoader/QuantLoader/DataStorer/OffchipDataStorer）是面向CNN卷积特征提取设计的，尚未包含用于实现多头自注意力（Multi-Head Self-Attention, MHSA）所必需的点积缩放（Scaled Dot-Product Attention）、Softmax激活、位置编码等算子的硬件加速路径。将当前编译器扩展到Transformer类网络（如ViT [Dosovitskiy, 2020]、Swin Transformer [Liu, 2021]），需要先在硬件层面引入对应的新指令类型，再在编译器的LayerDesc解析、TilingPlan生成和Emitter三个层次同步扩展，是一项涉及硬件-编译器协同设计的系统性工作，超出本文的范围。
 
 **多批次推理（batch > 1）的缺失**：目标加速器的片上buffer容量和DataLoader的传输机制均按单帧推理（batch=1）设计，多帧流水通过`load_next`机制实现，而非通过增大batch size实现。当前`PipelineConfig`和`TilingPlan`的所有参数均以batch=1为隐含前提，扩展到batch>1需要重新建模DataLoader的地址步进规则和片上buffer的多帧并发布局，与当前架构存在根本性的设计冲突，在短期内不纳入扩展计划。
 
@@ -222,7 +222,7 @@ QuantLoader的`quant_mode`字段是硬件量化参数表的索引，其取值由
 
 ## 7.5　结语
 
-本文从一个具体的工程问题出发——如何让一款自研CNN加速器不再依赖手写的3,800行硬编码脚本——出发，通过设计分层中间表示体系、提出结构性模式融合Pass、实现针对性的调度策略，构建了一个具有完整功能的TVM前端编译器，并在FSRCNN（1,273/1,273指令数对齐）和SD-UNet（17,155/17,155，0功能性diff，数据通路等价性经形式化验证）两个目标网络上完成了端到端的指令级精确验证。
+本文从一个具体的工程问题出发——如何让一款自研CNN加速器不再依赖手写的3,800行硬编码脚本——通过设计分层中间表示体系、提出结构性模式融合Pass、实现针对性的调度策略，构建了一个具有完整功能的TVM前端编译器，并在FSRCNN（1,273/1,273指令数对齐）和SD-UNet（17,155/17,155，功能性diff为0，数据通路等价性经形式化验证）两个目标网络上完成了端到端的指令级精确验证。
 
 这项工作的意义不仅在于取代了手写脚本，更在于它揭示了一种可复用的设计模式：面向定制加速器的神经网络编译器，可以在TVM的前端能力（多框架导入、IR规范化、Pass管理）基础上，通过精确控制的分层中间表示和针对性的融合Pass，以远小于手写方案的工程代价，实现对硬件ISA语义的精确建模。两个算子复杂度差异悬殊的网络在同一框架下得到正确编译，印证了这一方法论的有效性。
 
